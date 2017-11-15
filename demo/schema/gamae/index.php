@@ -1,0 +1,1 @@
+<META http-equiv="refresh" content="0;URL=http://www.dntsys.net/dntis/schema/gretabe/dmimea/">

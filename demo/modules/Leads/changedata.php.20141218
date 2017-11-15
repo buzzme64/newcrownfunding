@@ -1,0 +1,189 @@
+<?php
+$record=(int)$_REQUEST['record'];
+if (count($_POST)>1){
+	$error=array();
+	$upd=array();
+	if ($_POST['cf_733']=="-") $error[]="Categories must be full";
+	if (count($error)==0){
+	foreach ($_POST as $key => $value) {
+		if ($key=="cf_720" || $key=="cf_727")
+			$upd[]=$key." = '".substr($value,6)."-".substr($value,0,2)."-".substr($value,3,2)."'";
+		else
+			$upd[]=$key." = '".$value."'";
+	}
+	$res=mysql_query("update vtiger_leadscf set ".  implode(", ", $upd)." where leadid='".$record."'");
+	if (isset($_POST['cf_721']) && isset($_POST['cf_722']) && isset($_POST['cf_723']) && isset($_POST['cf_724']) && isset($_POST['cf_725']) && isset($_POST['cf_726']) ){
+		$sootn=array(
+			'cf_721' => "funder",
+			'cf_722' => "advamount",
+			'cf_723' => "paybackamount",
+			'cf_724' => "hp",
+			'cf_725' => "dailyamount",
+			'cf_726' => "closingcosts",
+			'cf_727' => "datefunded",
+			'cf_733' => "categories"
+		);
+		$keyins=array("leadid","timeadd");
+		$valueins=array($_GET['record'],date('Y-m-d H:i:s'));
+		foreach ($sootn as $key=>$value){
+			$keyins[]=$value;
+			if ($key=="cf_727")
+				$valueins[]=substr($_POST[$key],6)."-".substr($_POST[$key],0,2)."-".substr($_POST[$key],3,2);
+			else
+				$valueins[]=$_POST[$key];
+		}
+		$query="insert into vtiger_leads_funded (".implode(", ", $keyins).") values('".implode("', '",$valueins)."')";
+		mysql_query($query);
+	}
+?>
+<html>
+	<head>
+		<script>
+			window.opener.updateleadstatus('<?php echo $record; ?>');
+			window.close();
+		</script>
+	</head>
+	<body></body>
+</html>
+<?php
+	}
+}else{
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Super User - Leads - vtiger CRM 5 - Commercial Open Source CRM</title>
+	<link REL="SHORTCUT ICON" HREF="themes/images/vtigercrm_icon.ico">
+	<style type="text/css">@import url("themes/softed/style.css?v=5.4.0");</style>
+	<link rel="stylesheet" type="text/css" media="all" href="jscalendar/calendar-win2k-cold-1.css">
+	<link rel="stylesheet" href="/staging/drop/jquery.fileupload-ui.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+	<script language="JavaScript" type="text/javascript" src="modules/Calendar/script.js"></script>
+	<link rel="stylesheet" type="text/css" media="all" href="jscalendar/calendar-win2k-cold-1.css">
+	<script type="text/javascript" src="jscalendar/calendar.js"></script>
+	<script type="text/javascript" src="jscalendar/lang/calendar-en.js"></script>
+	<script type="text/javascript" src="jscalendar/calendar-setup.js"></script>
+	<!-- ActivityReminder customization for callback -->
+
+	<style type="text/css">div.fixedLay1 { position:fixed; }</style>
+	<!--[if lte IE 6]>
+	<style type="text/css">div.fixedLay { position:absolute; }</style>
+	<![endif]-->
+	<style type="text/css">div.drop_mnu_user { position:fixed; }</style>
+	<!--[if lte IE 6]>
+	<style type="text/css">div.drop_mnu_user { position:absolute; }</style>
+	<![endif]-->
+
+	<!-- End -->
+
+</head>
+<body leftmargin=0 topmargin=0 marginheight=0 marginwidth=0 class="small">
+<?php
+$data=array();
+if ($_REQUEST['status']=="5. Contract Out"){
+	$arr=array(
+		"Funder"=>"cf_714",
+		"Advance amount"=>"cf_715",
+		"Payback amount"=>"cf_716",
+		"HP %"=>"cf_717",
+		"Daily amount"=>"cf_718",
+		"Closing costs"=>"cf_719",
+		"Date contract sent"=>"cf_720"
+	);
+	$res= mysql_query("select ".implode(", ", $arr)." from vtiger_leadscf where leadid='".$record."'");
+	while ($row=  mysql_fetch_array($res,MYSQL_ASSOC))$data=$row;
+}elseif ($_REQUEST['status']=="7. Funded"){
+	$arr=array(
+		"Funder"=>"cf_714",
+		"Advance amount"=>"cf_715",
+		"Payback amount"=>"cf_716",
+		"HP %"=>"cf_717",
+		"Daily amount"=>"cf_718",
+		"Closing costs"=>"cf_719",
+		"Date contract sent"=>"cf_720"
+	);
+	$resfirst=  mysql_query("select ".implode(", ", $arr)." from vtiger_leadscf where leadid='".$record."'");
+	$data2=array();
+	while($row=  mysql_fetch_array($resfirst,MYSQL_ASSOC)) $data2=$row;
+	$arr=array(
+		".Funder"=>"cf_721",
+		".Advance amount"=>"cf_722",
+		".Payback amount"=>"cf_723",
+		".HP %"=>"cf_724",
+		".Daily amount"=>"cf_725",
+		".Closing costs"=>"cf_726",
+		".Date funded"=>"cf_727",
+		"Categories"=>"cf_733"
+	);
+	$sootn=array(
+		"cf_721"=>"cf_714",
+		"cf_722"=>"cf_715",
+		"cf_723"=>"cf_716",
+		"cf_724"=>"cf_717",
+		"cf_725"=>"cf_718",
+		"cf_726"=>"cf_719",
+		"cf_727"=>"cf_720"
+	);
+	/*$res= mysql_query("select ".implode(", ", $arr)." from vtiger_leadscf where leadid='".$record."'");
+	while ($row=  mysql_fetch_array($res,MYSQL_ASSOC))$data=$row;*/
+	foreach ($arr as $key=>$value){
+		if ($data[$value]=="") {
+			$data[$value]=$data2[$sootn[$value]];
+		}
+	}
+	$res=mysql_query("select cf_733 from vtiger_cf_733");
+	while ($row=  mysql_fetch_assoc($res)) $cf_733[]=$row['cf_733'];
+}
+
+if (count($data)>0){ ?>
+<script type="text/javascript">
+	function validate(){
+		error='';
+		<?php
+		foreach ($arr as $key=>$value){
+			echo "if (document.getElementById('".$value."').value=='') error+= '".$key." must be full\\n';\n";
+		}
+		?>
+		<?php if ($_REQUEST['status']=="7. Funded"){ ?>if (document.getElementById('cf_733').value=='-') error+='Categories must be full\n';<?php } ?>
+		if (error!='') alert(error);
+		else document.getElementById('form').submit();
+	}
+</script>
+	<?php if (isset($error) && count($error)>0) { ?>
+	<div style="text-align: center; color: #FF0000;font-weight: bold;"><?php echo implode("<br/>", $error); ?></div>
+	<?php } ?>
+	<?php echo '<form action="" method="POST" id="form"><table class="small" width="100%" cellspacing="0" cellpadding="0" border="0">';
+	$i=0;
+	foreach ($arr as $key=>$value){
+		$i++;
+		echo '<tr>
+	<td class="dvtCellLabel" width="100px" align="right">'.$key.'</td>
+	<td class="dvtCellInfo" align="left">';
+		if ($value=='cf_727' || $value=='cf_720')
+			echo '<input id="'.$value.'" type="text" value="'.((trim($data[$value])=="")?"":substr($data[$value],5,2)."-".substr($data[$value],8)."-".substr($data[$value],0,4)).'" maxlength="10" size="11" style="border:1px solid #bababa;" tabindex="" name="'.$value.'">
+			<img id="jscal_trigger_'.$value.'" src="themes/softed/images/btnL3Calendar.gif">
+			<br><font size="1"><em old="(yyyy-mm-dd)">(mm-dd-yyyy)</em></font>
+				<script id="massedit_calendar_'.$value.'" type="text/javascript">
+					Calendar.setup ({
+						inputField : "'.$value.'", ifFormat : "%m-%d-%Y", showsTime : false, button : "jscal_trigger_'.$value.'", singleClick : true, step : 1
+					})
+				</script>';
+		elseif ($value=="cf_733"){
+			echo '<select id="'.$value.'" name="'.$value.'">';
+			foreach ($cf_733 as $val){
+				echo '<option value="'.$val.'"';
+				if ($val==$data['cf_733']) echo ' selected';
+				echo '>'.$val.'</option>';
+			}
+			echo '</select>';
+		}else
+			echo '<input id="'.$value.'" type="text" value="'.$data[$value].'" maxlength="10" size="11" style="border:1px solid #bababa;" tabindex="" name="'.$value.'">';
+	echo '</td>
+</tr>';
+	}
+	echo '<tr><td colspan="2" class="dvtCellInfo" align="center"><input type="button" onclick="validate()" value="Save" class="crmButton small save"></td></tr>';
+	echo '</table></form>';
+} ?>
+</body>
+</html>
+<?php } ?>

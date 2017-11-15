@@ -1,0 +1,48 @@
+1. Instead of the + sign  in create new lead they want it to state "Create New Lead"
+
+2. The create new lead fields
+
+
+They want the fields to reflect the fields on their form
+http://www.powerlinefunding.com/wp-content/uploads/application.pdf
+
+3. From their from the first 2 sections are mandatory. Business information + Merchant / Owner information.
+
+3.1 If some of the mandatory information was not filled then those fields will display in yellow when this lead is viewed on the next login.
+
+4. The system must report if the DBA or legal name  or address or phone number already exists in the system.
+Some people might try to obtain a loan after they failed to pay a pervious one. 
+
+5. Contacts can be sorted by DBA and alphabetically. 
+
+6. User and admins will not have the ability to delete. They can archive. Only one super admin may delete.
+
+7. Please change the time and date to a normal us time and date when adding a note or document etc. http://powerline.crm4ngo.com/index.php?module=Documents&action=index
+
+8. The way they want the workflow process to work is as follows:
+
+The stages:
+
+Leads -> Applications Out (vi email) -> Applications in -> Submitted (to underwriters) -> Approved -> Contracts Out -> Contracts in ->Funded
+
+OR -> Declined (if declined they will input the reason).
+
+Please see the attached image. They want the number on it.
+
+8. Each broker will the his/her numbers. The admin will see the group numbers.
+For example the admin may want to see to whom apps were sent to and how many came back etc. 
+
+9. The applications out routine. The broker's info which is name, email and phone 
+http://www.powerlinefunding.com/wp-content/uploads/application.pdf
+Will auto populate in the above form and he'll be able to send it to the lead. 
+
+The admin and broker can view whom it was sent to. 
+
+The admin will the the broke's (user) account with this info when he creates the account. 
+
+10. The admin can assign a lead to a different broker at the correct stage. 
+
+
+Regards,
+
+Boaz 

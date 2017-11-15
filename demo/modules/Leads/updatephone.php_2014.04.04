@@ -1,0 +1,14 @@
+<?php
+function getphoneonlynumber($phone){
+	$newphone="";
+	for ($i=0;$i<strlen($phone);$i++){
+		$char=substr($phone,$i,1);
+		if (preg_match ("/[0-9]{1}/", $char) ) $newphone.=$char;
+	}
+	return $newphone;
+}
+
+function updatephone($phone,$leadid){
+	$res=  mysql_query("update vtiger_leadscf set phone='".  getphoneonlynumber($phone)."' where leadid='".$leadid."'");
+}
+?>

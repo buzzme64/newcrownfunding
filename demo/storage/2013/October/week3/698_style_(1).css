@@ -1,0 +1,112 @@
+ul{
+	padding: 0;
+	list-style: none;
+	width: 90%;
+}
+li{
+	float: left;
+	margin-bottom: 30px;
+	height: 55px;
+	width: 200px;
+	padding: 5px 20px 0 55px;
+	cursor: pointer;
+}
+a{
+	text-decoration: none;
+	color: #444444;
+}
+a:hover{
+	color: #0099ff;
+}
+h2{
+	float:left;
+}
+.co-browsing{
+	background: url("img/co-browsing.png") no-repeat left top;
+}
+.co-browsing:hover{
+	background: url("img/co-browsing-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.vcard{
+	background: url("img/vcard.png") no-repeat left top;
+}
+.vcard:hover{
+	background: url("img/vcard-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.wallet{
+	background: url("img/wallet.png") no-repeat left top;
+}
+.wallet:hover{
+	background: url("img/wallet-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.polaroid{
+	background: url("img/polaroid.png") no-repeat left top;
+}
+.polaroid:hover{
+	background: url("img/polaroid-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.graph_chart{
+	background: url("img/graph_chart.png") no-repeat left top;
+}
+.graph_chart:hover{
+	background: url("img/graph_chart-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.locked{
+	background: url("img/locked.png") no-repeat left top;
+}
+.locked:hover{
+	background: url("img/locked-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.graph_chart_increasing{
+	background: url("img/graph_chart_increasing.png") no-repeat left top;
+}
+.graph_chart_increasing:hover{
+	background: url("img/graph_chart_increasing-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.bell{
+	background: url("img/bell.png") no-repeat left top;
+}
+.bell:hover{
+	background: url("img/bell-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.repeat{
+	background: url("img/repeat.png") no-repeat left top;
+}
+.repeat:hover{
+	background: url("img/repeat-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.speech_bubble{
+	background: url("img/speech_bubble.png") no-repeat left top;
+}
+.speech_bubble:hover{
+	background: url("img/speech_bubble-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.files{
+	background: url("img/files.png") no-repeat left top;
+}
+.files:hover{
+	background: url("img/files-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.settings{
+	background: url("img/settings.png") no-repeat left top;
+}
+.settings:hover{
+	background: url("img/settings-hover.png") no-repeat left top;
+	color:#0099ff;
+}
+.qwerty{
+	margin-top: 3000px;
+	float: right;
+	text-align: center;
+}

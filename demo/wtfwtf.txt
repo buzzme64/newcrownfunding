@@ -1,0 +1,6 @@
+select crm.smownerid, l.leadid, l.firstname, l.lastname, lcf.cf_641 dba,lcf.cf_734,crm.modifiedtime , lcf.cf_735, lcf.cf_736 as stat_date,na.timeadd as nstat_date
+	from vtiger_leaddetails l
+	inner join vtiger_leadscf lcf on l.leadid=lcf.leadid
+	inner join vtiger_crmentity crm on l.leadid=crm.crmid
+	inner join vtiger_leads_appsout na on l.leadid=na.leadid
+	where l.leadstatus='2. App Out'  and na.timeadd   >='2014-11-13' and na.timeadd  <='2016-12-13' order by stat_date

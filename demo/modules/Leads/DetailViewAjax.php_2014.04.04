@@ -1,0 +1,65 @@
+<?php
+/*+********************************************************************************
+ * The contents of this file are subject to the vtiger CRM Public License Version 1.0
+ * ("License"); You may not use this file except in compliance with the License
+ * The Original Code is:  vtiger CRM Open Source
+ * The Initial Developer of the Original Code is vtiger.
+ * Portions created by vtiger are Copyright (C) vtiger.
+ * All Rights Reserved.
+ *********************************************************************************/
+	      
+require_once('include/logging.php');
+require_once('include/database/PearDatabase.php');
+global $adb;
+
+$local_log =& LoggerManager::getLogger('LeadsAjax');
+global $currentModule;
+$modObj = CRMEntity::getInstance($currentModule);
+
+$ajaxaction = $_REQUEST["ajxaction"];
+if($ajaxaction == "DETAILVIEW")
+{
+	$res=mysql_query("select leadstatus from vtiger_leaddetails where leadid='".$_REQUEST['record']."'");
+	while ($row=  mysql_fetch_array($res,MYSQL_ASSOC)) $oldstatus=$row['leadstatus'];
+	if (isset($oldstatus) && $oldstatus=="Lead Pending")
+		$res=  mysql_query("update vtiger_leaddetails set leadstatus='1. App not sent' where leadid='".$_REQUEST['record']."'");
+	if ($_REQUEST['fldName']=="cf_720"){
+		$res=  mysql_query("select cf_727 from vtiger_leadscf where leadid='".$_REQUEST['record']."'");
+		$cf_727='0000-00-00';
+		while ($row=  mysql_fetch_array($res,MYSQL_ASSOC)) $cf_727=$ROW['cf_727'];
+		if ($cf_727=='0000-00-00')
+			$res=  mysql_query("update vtiger_leadscf set cf_727='".substr($_REQUEST['fieldValue'],6)."-".substr($_REQUEST['fieldValue'],0,2)."-".substr($_REQUEST['fieldValue'],3,2)."' where leadid='".$_REQUEST['record']."'");
+	}elseif($_REQUEST['fldName']=="cf_648"){
+		require_once('modules/Leads/updatephone.php');
+		updatephone($_REQUEST['fieldValue'], $_REQUEST['record']);
+	}elseif($_REQUEST['fldName']=="assigned_user_id" && $_REQUEST['fieldValue']!=1){
+		$res=  mysql_query("select changeassigned from vtiger_leaddetails where leadid='".$_REQUEST['record']."'");
+		while($row=  mysql_fetch_array($res,MYSQL_ASSOC)) $change=$row['changeassigned'];
+		if ($change=="") $res=  mysql_query ("update vtiger_leaddetails set changeassigned='".date ("Y-m-d")."' where leadid='".$_REQUEST['record']."'");
+	}
+	$crmid = $_REQUEST["recordid"];
+	$tablename = $_REQUEST["tableName"];
+	$fieldname = $_REQUEST["fldName"];
+	$fieldvalue = utf8RawUrlDecode($_REQUEST["fieldValue"]); 
+	if($crmid != "")
+	{
+		$modObj->retrieve_entity_info($crmid,"Leads");
+		$modObj->column_fields[$fieldname] = $fieldvalue;
+		$modObj->id = $crmid;
+		$modObj->mode = "edit";
+		$modObj->save("Leads");
+		if($modObj->id != "")
+		{
+			echo ":#:SUCCESS";
+		}else
+		{
+			echo ":#:FAILURE";
+		}   
+	}else
+	{
+		echo ":#:FAILURE";
+	}
+} elseif($ajaxaction == "LOADRELATEDLIST" || $ajaxaction == "DISABLEMODULE"){
+	require_once 'include/ListView/RelatedListViewContents.php';
+}
+?>

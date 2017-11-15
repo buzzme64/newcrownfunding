@@ -1,0 +1,5 @@
+<img src="cache/images/vert_" border="0" usemap="#cache/images/vert_">
+<map name="cache/images/vert_">
+	<area shape="rect" coords="107,38,227,162" href="index.php?module=Leads&action=ListView&from_homepagedb=true&type=dbrd&query=true&owner=Crystal Vale&viewname=50" alt="Leads=%d" title="Leads=%d">
+	<area shape="rect" coords="362,159,482,162" href="index.php?module=Calendar&action=ListView&from_homepagedb=true&type=dbrd&query=true&owner=Crystal Vale&viewname=19" alt="Calendar=%d" title="Calendar=%d">
+</map>

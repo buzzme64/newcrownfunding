@@ -1,0 +1,72 @@
+<?php
+/*+**********************************************************************************
+ * The contents of this file are subject to the vtiger CRM Public License Version 1.0
+ * ("License"); You may not use this file except in compliance with the License
+ * The Original Code is:  vtiger CRM Open Source
+ * The Initial Developer of the Original Code is vtiger.
+ * Portions created by vtiger are Copyright (C) vtiger.
+ * All Rights Reserved.
+ ************************************************************************************/
+
+require_once 'modules/Vtiger/EditView.php';
+
+if(isset($_REQUEST['campaignid'])) {
+	$smarty->assign("campaignid",vtlib_purify($_REQUEST['campaignid']));
+}
+if (isset($_REQUEST['record'])){
+	$viewblock=array(
+		'Lead Information'=>1,
+		'Business Information'=>1,
+		'MERCHANT/OWNER INFORMATION'=>1,
+		'Address Information'=>1
+	);
+	foreach ($smarty->_tpl_vars['BLOCKS'] as $key=>$blockfields){
+		if (isset($viewblock[$key])){
+			foreach($blockfields as $key2=>$blockrow){
+				$return=getfield($blockrow[0]);
+				if ($return!="") $smarty->_tpl_vars['BLOCKS'][$key][$key2][0][7]=$return;
+				$return=getfield($blockrow[1]);
+				if ($return!="") $smarty->_tpl_vars['BLOCKS'][$key][$key2][1][7]=$return;
+			}
+		}
+	}
+}
+$smarty->display("salesEditView.tpl");
+
+function getfield($field){
+	$return=array(
+		"novalue"=>" style='background:#ffff00;color:#000000;font-weight:bold;'",
+		"existvalue"=>""
+	);
+	switch($field[0][0]){
+		case 5:
+			$val=false;
+			foreach($field[3][0] as $key=>$value){
+				if (trim($value)!="") {
+					$val=true;
+				}
+			}
+			if (!$val)return $return["novalue"]; else return $return["existvalue"];
+			break;
+		case 1:
+		case 7:
+		case 11:
+		case 13:
+		case 17:
+		case 21:
+			if ($field[3][0]=="") return $return["novalue"]; else return $return["existvalue"];
+			break;
+		case 15:
+			$select=false;
+			foreach ($field[3][0] as $value){
+				if ($value[2]=="selected"){
+					$select=true;
+					//break;
+				}
+			}
+			if (!$select)return $return["novalue"]; else return $return["existvalue"];
+			break;
+		default: return $return["existvalue"]; break;
+	}
+}
+?>

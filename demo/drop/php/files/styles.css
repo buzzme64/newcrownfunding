@@ -1,0 +1,317 @@
+body{
+    margin: 0;
+    padding: 0;
+    font-family: Tahoma, Arial, Verdana, serif;
+}
+
+.clear{
+    clear: both;
+    height: 0px;
+    margin: 0;
+    padding: 0;
+}
+
+.activetalk-win-contactform-row input[type="text"],
+.activetalk-win-contactform-row textarea,
+div{
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.activetalk-win-wrapper{
+    width: 480px;
+    margin: 50px auto;
+    overflow: hidden;
+    background-color: #f7f7f7;
+    border: 1px solid #bbb;
+}
+
+.activetalk-win-branding{
+    
+}
+
+.activetalk-win-branding img{
+    display:block;
+}
+
+.activetalk-win-promo{
+    background-image: url(images/promo_bg.png);
+    background-repeat: repeat;
+    padding: 12px 24px;
+    font-size: 14px;
+    line-height: 20px;
+    color: #666;
+    
+    border-top: 1px solid #b2b2b2;
+    border-bottom: 1px solid #b2b2b2;
+    
+    box-shadow: 0 1px 0 #fff inset, 0 -1px 0 #fff inset, 0 1px 0 #fff, 0 -1px 0 #fff;
+}
+
+.activetalk-win-content{
+
+}
+
+.activetalk-win-formtitle{
+    margin: 12px 0;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #444;
+}
+
+.activetalk-win-contactform-container form{
+    margin: 0 12px;   
+}
+
+.activetalk-win-contactform-container form select{
+    padding: 10px 6px;
+    display: inline-block;
+    width: 50%;
+    float: left;
+    border: none;
+    border: 1px solid #ddd\0/;
+    color: #777;
+    font-size: 14px;
+    background-color: #fff;
+    
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    
+    box-shadow: 0 1px 2px #888 inset;
+}
+
+.activetalk-win-contactform-container form select option{
+    color: #777;
+    background-color: #fff;
+}
+
+.activetalk-win-onlinestatus{
+    float:right;
+    width:45%;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 38px;
+    font-size: 13px;
+    font-weight: bold;
+    text-indent: 20px;
+    background-position: 0 12px;
+    background-repeat: no-repeat;
+}
+
+.activetalk-win-onlinestatus.online{
+    color: #006633;
+    background-image: url(images/bullet_online.png);
+}
+
+.activetalk-win-onlinestatus.offline{
+    color: #990000;
+    background-image: url(images/bullet_offline.png);
+}
+
+.activetalk-win-contactform-row{
+    margin:16px 0 0;
+}
+
+.activetalk-win-contactform-row textarea,
+.activetalk-win-contactform-row input[type="text"]{
+    position:relative;
+    width: 100%;
+    margin: 0;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #f7f7f7;
+    border: 1px solid #ddd\0/;
+    background-color: #fff;
+    color: #777;
+    
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    
+    -webkit-box-shadow: 0 1px 2px #888 inset;
+    -moz-box-shadow: 0 1px 2px #888 inset;
+    box-shadow: #888 0 1px 2px inset;
+}
+
+.activetalk-win-contactform-row textarea{
+    resize: none;
+    height: 110px;
+    overflow: auto;
+    font-family: Tahoma, Arial, Verdana, serif;
+}
+
+.activetalk-win-contactform-row select:focus{
+    outline: none;    
+}
+
+.activetalk-win-contactform-row textarea:focus,
+.activetalk-win-contactform-row input[type="text"]:focus{
+    outline: none;
+    border: 1px solid #999;
+    box-shadow: none;
+}
+
+.activetalk-win-sendbtn{
+    border: none;
+    background-color: #f5f5f5;
+    padding: 12px 16px;
+    color: #fff;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-block;
+    float: right;
+    
+    background: -webkit-gradient(linear, 0 0, 0 bottom, from(#de4846), to(#b11b19));
+    background: -webkit-linear-gradient(#de4846, #b11b19);
+    background: -moz-linear-gradient(#de4846, #b11b19);
+    background: -ms-linear-gradient(#de4846, #b11b19);
+    background: -o-linear-gradient(#de4846, #b11b19);
+    background: linear-gradient(#de4846, #b11b19);
+    background: #b11b19\0/;
+    
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    
+    box-shadow: 0 1px 1px #f0a5a4 inset, 0 0 1px 1px #9c0000;
+}
+
+.activetalk-win-sendbtn:hover{
+    background: #b11b19;
+}
+
+.activetalk-win-sendbtn:active{
+    box-shadow: 0 0 1px 1px #9c0000;
+    outline: none;
+}
+
+.activetalk-win-footer{
+    font-size: 11px;
+    color: #666;
+    padding: 0 12px 12px 12px;
+}
+
+.activetalk-win-accent{
+    color: #990000;
+}
+
+.activetalk-win-message-container{
+    position: relative;
+    margin: 16px 12px 12px;
+    padding: 0;
+    font-size: 14px;
+    border: 1px solid #f7f7f7;
+    border: 1px solid #ddd\0/;
+    background-color: #fff;
+    color: #111;
+    
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    
+    -webkit-box-shadow: 0 1px 2px #888 inset;
+    -moz-box-shadow: 0 1px 2px #888 inset;
+    box-shadow: #888 0 1px 2px inset;
+}
+
+.activetalk-win-message-item{
+    padding: 16px 12px;
+}
+
+.activetalk-win-message-item.redirect{
+    text-align: center;
+}
+
+.activetalk-win-message-text{
+    width: 80%;
+    float: left;
+    line-height: 19px;
+}
+
+.activetalk-win-message-datetime{
+    width: 15%;
+    float: right;
+}
+
+.activetalk-win-message-redirect-container{
+    display: inline-block;
+    float: none;
+    margin: 0 auto;
+    width: auto;
+    color: #0099ff;
+    font-style: italic;
+    font-size: 14px;
+    text-align: center;
+    text-indent: 18px;
+    background-image: url(images/arrow-circle.png);
+    background-repeat: no-repeat;
+    background-position: 0 center;
+}
+
+.activetalk-win-controllerblock{
+    width: 250px;
+    float: left;
+    overflow: hidden;
+}
+
+.activetalk-win-controllerblock ul{
+    margin: 0 0 0 -1px;
+    padding: 0;
+    list-style: none;
+}
+
+.activetalk-win-controllerblock ul li{
+    display:block;
+    float: left;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    width: 40px;
+    height: 20px;
+    border-left: 1px solid #b3b3b3;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.activetalk-win-controllerblock ul li.smile{
+    background-image: url(images/smile.png);
+}
+
+.activetalk-win-controllerblock ul li.email{
+     background-image: url(images/email.png);
+}
+
+.activetalk-win-controllerblock ul li.print{
+     background-image: url(images/printer.png);
+}
+
+.activetalk-win-controllerblock ul li.history{
+     background-image: url(images/history.png);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

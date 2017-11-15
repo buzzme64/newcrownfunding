@@ -1,0 +1,1590 @@
+
+<script language="JavaScript" type="text/javascript" src="include/js/ListView.js"></script>
+<script language="JavaScript" type="text/javascript" src="include/js/search.js"></script>
+<script language="JavaScript" type="text/javascript" src="include/js/Merge.js"></script>
+<script language="JavaScript" type="text/javascript" src="include/js/dtlviewajax.js"></script>
+<script language="JavaScript" type="text/javascript" src="include/js/FieldDependencies.js"></script>
+<script type="text/javascript" src="modules/com_vtiger_workflow/resources/jquery-1.2.6.js"></script>
+<script type="text/javascript">
+	jQuery.noConflict();
+</script>
+<script language="javascript" type="text/javascript">
+var typeofdata = new Array();
+typeofdata['E'] = ['e','n','s','ew','c','k'];
+typeofdata['V'] = ['e','n','s','ew','c','k'];
+typeofdata['N'] = ['e','n','l','g','m','h'];
+typeofdata['NN'] = ['e','n','l','g','m','h'];
+typeofdata['T'] = ['e','n','l','g','m','h'];
+typeofdata['I'] = ['e','n','l','g','m','h'];
+typeofdata['C'] = ['e','n'];
+typeofdata['DT'] = ['e','n','l','g','m','h'];
+typeofdata['D'] = ['e','n','l','g','m','h'];
+var fLabels = new Array();
+fLabels['e'] = "is";
+fLabels['n'] = "is not";
+fLabels['s'] = "begins with";
+fLabels['ew'] = "ends with";
+fLabels['c'] = "contains";
+fLabels['k'] = "does not contains";
+fLabels['l'] = "less than";
+fLabels['g'] = "greater than";
+fLabels['m'] = "less or equal";
+fLabels['h'] = "greater or equal";
+var noneLabel;
+
+function trimfValues(value)
+{
+    var string_array;
+    string_array = value.split(":");
+    return string_array[4];
+}
+
+function updatefOptions(sel, opSelName) {
+    var selObj = document.getElementById(opSelName);
+    var fieldtype = null ;
+
+    var currOption = selObj.options[selObj.selectedIndex];
+    var currField = sel.options[sel.selectedIndex];
+    
+    var fld = currField.value.split(":");
+    var tod = fld[4];
+    if(currField.value != null && currField.value.length != 0)
+    {
+	fieldtype = trimfValues(currField.value);
+	fieldtype = fieldtype.replace(/\\'/g,'');
+	ops = typeofdata[fieldtype];
+	var off = 0;
+	if(ops != null)
+	{
+
+		var nMaxVal = selObj.length;
+		for(nLoop = 0; nLoop < nMaxVal; nLoop++)
+		{
+			selObj.remove(0);
+		}
+		for (var i = 0; i < ops.length; i++)
+		{
+			var label = fLabels[ops[i]];
+			if (label == null) continue;
+			var option = new Option (fLabels[ops[i]], ops[i]);
+			selObj.options[i] = option;
+			if (currOption != null && currOption.value == option.value)
+			{
+				option.selected = true;
+			}
+		}
+	}
+    }else
+    {
+	var nMaxVal = selObj.length;
+	for(nLoop = 0; nLoop < nMaxVal; nLoop++)
+	{
+		selObj.remove(0);
+	}
+	selObj.options[0] = new Option ('None', '');
+	if (currField.value == '') {
+		selObj.options[0].selected = true;
+	}
+    }
+
+}
+
+</script>
+<script language="JavaScript" type="text/javascript" src="modules/Leads/Leads.js"></script>
+<script language="javascript">
+function checkgroup()
+{
+  if($("group_checkbox").checked)
+  {
+  document.change_ownerform_name.lead_group_owner.style.display = "block";
+  document.change_ownerform_name.lead_owner.style.display = "none";
+  }
+  else
+  {
+  document.change_ownerform_name.lead_owner.style.display = "block";
+  document.change_ownerform_name.lead_group_owner.style.display = "none";
+  }    
+  
+}
+function callSearch(searchtype)
+{
+	for(i=1;i<=26;i++)
+    	{
+        	var data_td_id = 'alpha_'+ eval(i);
+        	getObj(data_td_id).className = 'searchAlph';
+    	}
+    	gPopupAlphaSearchUrl = '';
+	search_fld_val= $('bas_searchfield').options[$('bas_searchfield').selectedIndex].value;
+	search_txt_val= encodeURIComponent(document.basicSearch.search_text.value);
+        var urlstring = '';
+        if(searchtype == 'Basic')
+        {
+        		var p_tab = document.getElementsByName("parenttab");
+                urlstring = 'search_field='+search_fld_val+'&searchtype=BasicSearch&search_text='+search_txt_val+'&';
+                urlstring = urlstring + 'parenttab='+p_tab[0].value+ '&';
+        }
+        else if(searchtype == 'Advanced')
+        {
+        		checkAdvancedFilter();
+				var advft_criteria = $('advft_criteria').value;
+				var advft_criteria_groups = $('advft_criteria_groups').value;
+				urlstring += '&advft_criteria='+advft_criteria+'&advft_criteria_groups='+advft_criteria_groups+'&';
+				urlstring += 'searchtype=advance&'
+        }
+	$("status").style.display="inline";
+	new Ajax.Request(
+		'index.php',
+		{queue: {position: 'end', scope: 'command'},
+			method: 'post',
+			postBody:urlstring +'query=true&file=index&module=Leads&action=LeadsAjax&ajax=true&search=true',
+			onComplete: function(response) {
+								$("status").style.display="none";
+                                result = response.responseText.split('&#&#&#');
+                                $("ListViewContents").innerHTML= result[2];
+                                if(result[1] != '')
+									alert(result[1]);
+								$('basicsearchcolumns').innerHTML = '';
+			}
+	       }
+        );
+	return false
+}
+function alphabetic(module,url,dataid)
+{
+        for(i=1;i<=26;i++)
+        {
+                var data_td_id = 'alpha_'+ eval(i);
+                getObj(data_td_id).className = 'searchAlph';
+
+        }
+        getObj(dataid).className = 'searchAlphselected';
+	$("status").style.display="inline";
+	new Ajax.Request(
+		'index.php',
+		{queue: {position: 'end', scope: 'command'},
+			method: 'post',
+			postBody: 'module='+module+'&action='+module+'Ajax&file=index&ajax=true&search=true&'+url,
+			onComplete: function(response) {
+				$("status").style.display="none";
+				result = response.responseText.split('&#&#&#');
+				$("ListViewContents").innerHTML= result[2];
+				if(result[1] != '')
+			                alert(result[1]);
+				$('basicsearchcolumns').innerHTML = '';
+			}
+		}
+	);
+}
+
+</script>
+
+		<script type="text/javascript" src="modules/Leads/Leads.js"></script>
+
+<TABLE border=0 cellspacing=0 cellpadding=0 width=100% class=small>
+<tr><td style="height:2px"></td></tr>
+<tr>
+			
+	<td style="padding-left:10px;padding-right:50px" class="moduleName" nowrap><a class="hdrLink" href="index.php?action=ListView&module=Leads&parenttab=Marketing">Leads</a></td>
+	<td width=100% nowrap>
+	
+		<table border="0" cellspacing="0" cellpadding="0" >
+		<tr>
+		<td class="sep1" style="width:1px;"></td>
+		<td class=small >
+			<!-- Add and Search -->
+			<table border=0 cellspacing=0 cellpadding=0>
+			<tr>
+			<td>
+				<table border=0 cellspacing=0 cellpadding=5>
+				<tr>
+								        			                        		       												<td style="padding-right:0px;padding-left:10px;"><a href="index.php?module=Leads&action=EditView&return_action=DetailView&parenttab=Marketing"><img src="themes/softed/images/btnL3Add_lead.gif" alt="Create Lead..." title="Create Lead..." border=0></a></td>
+														                       															
+											 <td style="padding-right:10px"><a href="index.php?module=Leads&action=newaddlead"><img src="themes/softed/images/btnL3Search.gif" alt="Search in Leads..." title="Search in Leads..." border=0></a></a></td>
+										<!--<td style="padding-right:0px;padding-left:10px;"><a href="index.php?module=Leads&action=newaddlead"><img src="themes/images/btnL3Add-Faded.gif"></a></td>
+                	   		-->	
+				</tr>
+				</table>
+			</td>
+			</tr>
+			</table>
+		</td>
+		<td style="width:20px;">&nbsp;</td>
+		<td class="small">
+			<!-- Calendar Clock Calculator and Chat -->
+				<table border=0 cellspacing=0 cellpadding=5>
+				<tr>
+						 
+ 		                                                						 
+ 		                                                                <td style="padding-right:0px;padding-left:10px;"><a href="javascript:;" onClick='fnvshobj(this,"miniCal");getMiniCal("parenttab=Marketing");'><img src="themes/softed/images/btnL3Calendar.gif" alt="Open Calendar..." title="Open Calendar..." border=0></a></a></td> 
+ 		                                                         
+																 
+ 		                                                <td style="padding-right:0px"><a href="javascript:;"><img src="themes/softed/images/btnL3Clock.gif" alt="Show World Clock..." title="Show World Clock..." border=0 onClick="fnvshobj(this,'wclock');"></a></a></td> 
+ 		                                         
+ 		                                         
+ 		                                                <td style="padding-right:0px"><a href="#"><img src="themes/softed/images/btnL3Calc.gif" alt="Open Calculator..." title="Open Calculator..." border=0 onClick="fnvshobj(this,'calculator_cont');fetch_calc();"></a></td> 
+ 		                                         
+ 		                                         
+ 		                                                <td style="padding-right:10px"><a href="javascript:;" onClick='return window.open("index.php?module=Home&action=vtchat","Chat","width=600,height=450,resizable=1,scrollbars=1");'><img src="themes/softed/images/tbarChat.gif" alt="Chat..." title="Chat..." border=0></a> 
+ 		                                         
+                    </td>	
+					<td style="padding-right:10px"><img src="themes/softed/images/btnL3Tracker.gif" alt="Last Viewed" title="Last Viewed" border=0 onClick="fnvshobj(this,'tracker');">
+                    			</td>	
+				</tr>
+				</table>
+		</td>
+		<td style="width:20px;">&nbsp;</td>
+		<td class="small">
+			<!-- Import / Export -->
+			<table border=0 cellspacing=0 cellpadding=5>
+			<tr>
+
+			           		   			
+					<td style="padding-right:0px;padding-left:10px;"><a href="index.php?module=Leads&action=Import&step=1&return_module=Leads&return_action=index&parenttab=Marketing"><img src="themes/softed/images/tbarImport.gif" alt="Import Leads" title="Import Leads" border="0"></a></td>	
+					
+					
+                    <td style="padding-right:10px"><a name='export_link' href="javascript:void(0)" onclick="return selectedRecords('Leads','Marketing')"><img src="themes/softed/images/tbarExport.gif" alt="Export Leads" title="Export Leads" border="0"></a></td>
+										
+			
+			 
+					
+					<!--<td style="padding-right:10px"><a href="index.php?module=Leads&action=FindDuplicateRecords&button_view=true&list_view=true&parenttab=Marketing"><img src="themes/softed/images/findduplicates.gif" alt="" title="Find Duplicates" border="0"></a></td> -->
+					<td style="padding-right:10px"><a href="javascript:;" onClick="moveMe('mergeDup');mergeshowhide('mergeDup');searchhide('searchAcc','advSearch');"><img src="themes/images/findduplicates.gif" alt="" title="Find Duplicates" border="0"></a></td>
+										
+			</tr>
+			</table>	
+		<td style="width:20px;">&nbsp;</td>
+		<td class="small">
+				<!-- All Menu -->
+				<table border=0 cellspacing=0 cellpadding=5>
+				<tr>
+								</tr>
+				</table>
+		</td>
+		</tr>
+		</table>
+	</td>
+</tr>
+<tr><td style="height:2px"></td></tr>
+</TABLE>                                <div id="searchingUI" style="display:none;">
+                                        <table border=0 cellspacing=0 cellpadding=0 width=100%>
+                                        <tr>
+                                                <td align=center>
+                                                <img src="themes/images/searching.gif" alt="Searching... please wait"  title="Searching... please wait">
+                                                </td>
+                                        </tr>
+                                        </table>
+
+                                </div>
+                        </td>
+                </tr>
+                </table>
+        </td>
+</tr>
+</table>
+
+<table border=0 cellspacing=0 cellpadding=0 width=98% align=center>
+     <tr>
+        <td valign=top><img src="themes/softed/images/showPanelTopLeft.gif"></td>
+
+	<td class="showPanelBg" valign="top" width=100% style="padding:10px;">
+	<!-- Lead Search-->
+	 <!-- SIMPLE SEARCH -->
+<div id="searchAcc" style="display: block;position:relative;">
+<form name="basicSearch" method="post" action="index.php" onSubmit="return callSearch('Basic');">
+<table width="100%" cellpadding="5" cellspacing="0"  class="searchUIBasic small" align="center" border=0>
+	<tr>
+		<td class="searchUIName small" nowrap align="left">
+		<span class="moduleName">Search</span><br><span class="small"><a href="#" onClick="fnhide('searchAcc');show('advSearch');document.basicSearch.searchtype.value='advance';">Go to Advanced Search</a></span>
+		<!-- <img src="themes/images/basicSearchLens.gif" align="absmiddle" alt="Basic Search" title="Basic Search" border=0>&nbsp;&nbsp;-->
+		</td>
+		<td class="small" nowrap align=right><b>Search for</b></td>
+		<td class="small" style="text-align: center; width:125px;"><input type="text"  class="txtBox" style="width:120px;" name="search_text"></td>
+		<td class="small" nowrap style="display:none;"><b>In</b>&nbsp;</td>
+		<td class="small" nowrap style="display:none;">
+			<div id="basicsearchcolumns_real">
+			<select name="search_field" id="bas_searchfield" class="txtBox" style="width:150px;display:none;">
+			 <option label="DBA" value="cf_641">DBA</option>
+<option label="First Name" value="firstname">First Name</option>
+<option label="Last Name" value="lastname">Last Name</option>
+<option label="Email" value="email">Email</option>
+<option label="Telephone Number" value="cf_648">Telephone Number</option>
+<option label="State" value="cf_643">State</option>
+<option label="Date Assigned" value="changeassigned">Date Assigned</option>
+<option label="Assigned To" value="assigned_user_id">Assigned To</option>
+<option label="Lead Status" value="leadstatus">Lead Status</option>
+
+			</select>
+			</div>
+                        <input type="hidden" name="searchtype" value="BasicSearch">
+                        <input type="hidden" name="module" value="Leads" id="curmodule">
+						<input name="maxrecords" type="hidden" value="20" id='maxrecords'>
+                        <input type="hidden" name="parenttab" value="Marketing">
+			<input type="hidden" name="action" value="index">
+                        <input type="hidden" name="query" value="true">
+			<input type="hidden" name="search_cnt">
+		</td>
+		<td class="small" nowrap width=40% >
+			  <input name="submit" type="button" class="crmbutton small create" onClick="callSearch('Basic');" value=" Search Now ">&nbsp;
+			  
+		</td>
+		<td class="small" valign="top" onMouseOver="this.style.cursor='pointer';" onclick="moveMe('searchAcc');searchshowhide('searchAcc','advSearch')">[x]</td>
+	</tr>
+	<tr>
+		<td colspan="7" align="center" class="small" style="display: none;">
+			<table border=0 cellspacing=0 cellpadding=0 width=100%>
+				<tr>
+                                                <td class="searchAlph" id="alpha_1" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=A","alpha_1")'>A</td><td class="searchAlph" id="alpha_2" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=B","alpha_2")'>B</td><td class="searchAlph" id="alpha_3" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=C","alpha_3")'>C</td><td class="searchAlph" id="alpha_4" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=D","alpha_4")'>D</td><td class="searchAlph" id="alpha_5" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=E","alpha_5")'>E</td><td class="searchAlph" id="alpha_6" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=F","alpha_6")'>F</td><td class="searchAlph" id="alpha_7" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=G","alpha_7")'>G</td><td class="searchAlph" id="alpha_8" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=H","alpha_8")'>H</td><td class="searchAlph" id="alpha_9" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=I","alpha_9")'>I</td><td class="searchAlph" id="alpha_10" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=J","alpha_10")'>J</td><td class="searchAlph" id="alpha_11" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=K","alpha_11")'>K</td><td class="searchAlph" id="alpha_12" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=L","alpha_12")'>L</td><td class="searchAlph" id="alpha_13" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=M","alpha_13")'>M</td><td class="searchAlph" id="alpha_14" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=N","alpha_14")'>N</td><td class="searchAlph" id="alpha_15" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=O","alpha_15")'>O</td><td class="searchAlph" id="alpha_16" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=P","alpha_16")'>P</td><td class="searchAlph" id="alpha_17" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=Q","alpha_17")'>Q</td><td class="searchAlph" id="alpha_18" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=R","alpha_18")'>R</td><td class="searchAlph" id="alpha_19" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=S","alpha_19")'>S</td><td class="searchAlph" id="alpha_20" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=T","alpha_20")'>T</td><td class="searchAlph" id="alpha_21" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=U","alpha_21")'>U</td><td class="searchAlph" id="alpha_22" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=V","alpha_22")'>V</td><td class="searchAlph" id="alpha_23" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=W","alpha_23")'>W</td><td class="searchAlph" id="alpha_24" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=X","alpha_24")'>X</td><td class="searchAlph" id="alpha_25" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=Y","alpha_25")'>Y</td><td class="searchAlph" id="alpha_26" align="center" onClick='alphabetic("Leads","gname=&query=true&search_field=lastname&searchtype=BasicSearch&operator=s&type=alpbt&search_text=Z","alpha_26")'>Z</td>
+                                </tr>
+                        </table>
+		</td>
+	</tr>
+</table>
+</form><br>
+</div>
+								<!-- ADVANCED SEARCH -->
+<div id="advSearch" style="display:none;">
+<form name="advSearch" method="post" action="index.php" onSubmit="return callSearch('Advanced');">
+	<table  cellspacing=0 cellpadding=5 width=100% class="searchUIAdv1 small" align="center" border=0>
+		<tr>
+			<td class="searchUIName small" nowrap align="left"><span class="moduleName">Search</span><br><span class="small"><a href="#" onClick="show('searchAcc');fnhide('advSearch')">Go to Basic Search</a></span></td>
+			<td class="small" align="right" valign="top" onMouseOver="this.style.cursor='pointer';" onclick="moveMe('searchAcc');searchshowhide('searchAcc','advSearch')">[x]</td>
+		</tr>
+	</table>
+	<table cellpadding="2" cellspacing="0" width="100%" align="center" class="searchUIAdv2 small" border=0>
+		<tr>
+			<td align="center" class="small" width=90%>
+				<!--*+********************************************************************************
+ * The contents of this file are subject to the vtiger CRM Public License Version 1.0
+ * ("License"); You may not use this file except in compliance with the License
+ * The Original Code is:  vtiger CRM Open Source
+ * The Initial Developer of the Original Code is vtiger.
+ * Portions created by vtiger are Copyright (C) vtiger.
+ * All Rights Reserved.
+ *********************************************************************************/
+-->
+<script src="include/js/json.js" type="text/javascript" charset="utf-8"></script>
+<script language="JavaScript" type="text/javascript" src="include/js/advancefilter.js"></script>
+	<input type="hidden" id="jscal_dateformat" name="jscal_dateformat" value="%d-%m-%Y" />
+<input type="hidden" id="image_path" name="image_path" value="themes/softed/images/" />
+<input type="hidden" name="advft_criteria" id="advft_criteria" value="" />
+<input type="hidden" name="advft_criteria_groups" id="advft_criteria_groups" value="" />
+
+<script language="JavaScript" type="text/JavaScript">
+function addColumnConditionGlue(columnIndex) {
+
+	var columnConditionGlueElement = document.getElementById('columnconditionglue_'+columnIndex);
+
+	if(columnConditionGlueElement) {
+		columnConditionGlueElement.innerHTML = "<select name='fcon"+columnIndex+"' id='fcon"+columnIndex+"' class='detailedViewTextBox'>"+
+													"<option value='and'>and</option>"+
+													"<option value='or'>or</option>"+
+												"</select>";
+	}
+}
+
+function addConditionRow(groupIndex) {
+
+	var groupColumns = column_index_array[groupIndex];
+	if(typeof(groupColumns) != 'undefined') {
+		for(var i=groupColumns.length - 1; i>=0; --i) {
+			var prevColumnIndex = groupColumns[i];
+			if(document.getElementById('conditioncolumn_'+groupIndex+'_'+prevColumnIndex)) {
+				addColumnConditionGlue(prevColumnIndex);
+				break;
+			}
+		}
+	}
+
+	var columnIndex = advft_column_index_count+1;
+	var nextNode = document.getElementById('groupfooter_'+groupIndex);
+
+	var newNode = document.createElement('tr');
+	newNodeId = 'conditioncolumn_'+groupIndex+'_'+columnIndex;
+  	newNode.setAttribute('id',newNodeId);
+  	newNode.setAttribute('name','conditionColumn');
+	nextNode.parentNode.insertBefore(newNode, nextNode);
+
+	node1 = document.createElement('td');
+	node1.setAttribute('class', 'dvtCellLabel');
+	node1.setAttribute('width', '25%');
+	newNode.appendChild(node1);
+			node1.innerHTML = "<select name='fcol"+columnIndex+"' id='fcol"+columnIndex+"' onchange='updatefOptions(this, \"fop"+columnIndex+"\");addRequiredElements("+columnIndex+");' class='detailedViewTextBox'>"+
+							"<option value=''>None</option>"+
+	        				"<optgroup label='BUSINESS PROPERTY INFORMATION' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_682:cf_682:Leads_Business_Landlord_or_Mortgage_Bank:V\' >Business Landlord or Mortgage Bank</option><option value=\'vtiger_leadscf:cf_683:cf_683:Leads_Contact_Name_and/or_Account_No.:V\' >Contact Name and/or Account No.</option><option value=\'vtiger_leadscf:cf_681:cf_681:Leads_Date_Lease_Ends:D\' >Date Lease Ends</option><option value=\'vtiger_leadscf:cf_680:cf_680:Leads_Monthly_Rent_or_Mortgage_$:V\' >Monthly Rent or Mortgage $</option><option value=\'vtiger_leadscf:cf_684:cf_684:Leads_Office/Mobile_Number:V\' >Office/Mobile Number</option><option value=\'vtiger_leadscf:cf_677:cf_677:Leads_Own/Lease:V\' >Own/Lease</option><option value=\'vtiger_leadscf:cf_679:cf_679:Leads_Time_at_This_Location_(Months):V\' >Time at This Location (Months)</option><option value=\'vtiger_leadscf:cf_678:cf_678:Leads_Time_at_This_Location_(Year):V\' >Time at This Location (Year)</option><optgroup label='BUSINESS TRADE REFERENCES' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_688:cf_688:Leads_-Fax_Number:V\' >-Fax Number</option><option value=\'vtiger_leadscf:cf_690:cf_690:Leads_.Business_Name:V\' >.Business Name</option><option value=\'vtiger_leadscf:cf_691:cf_691:Leads_.Contact_or_Account_Number:V\' >.Contact or Account Number</option><option value=\'vtiger_leadscf:cf_689:cf_689:Leads_.Fax_Number:V\' >.Fax Number</option><option value=\'vtiger_leadscf:cf_692:cf_692:Leads_.Phone_Number:V\' >.Phone Number</option><option value=\'vtiger_leadscf:cf_685:cf_685:Leads_Business_Name:V\' >Business Name</option><option value=\'vtiger_leadscf:cf_686:cf_686:Leads_Contact_or_Account_Number:V\' >Contact or Account Number</option><option value=\'vtiger_leadscf:cf_687:cf_687:Leads_Phone_Number:V\' >Phone Number</option><optgroup label='Business Information' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_729:cf_729:Leads_Address:V\' >Address</option><option value=\'vtiger_leadscf:cf_642:cf_642:Leads_City:V\' >City</option><option value=\'vtiger_leadscf:cf_649:cf_649:Leads_Date_Business_Started:D\' >Date Business Started</option><option value=\'vtiger_leadscf:cf_652:cf_652:Leads_Fax_Number:V\' >Fax Number</option><option value=\'vtiger_leadscf:cf_651:cf_651:Leads_Federal_Tax_ID:V\' >Federal Tax ID</option><option value=\'vtiger_leadscf:cf_653:cf_653:Leads_Hours_of_Operation:V\' >Hours of Operation</option><option value=\'vtiger_leadscf:cf_645:cf_645:Leads_Mailing_Address_(City):V\' >Mailing Address (City)</option><option value=\'vtiger_leadscf:cf_646:cf_646:Leads_Mailing_Address_(State):V\' >Mailing Address (State)</option><option value=\'vtiger_leadscf:cf_647:cf_647:Leads_Mailing_Address_(Zip_Code):V\' >Mailing Address (Zip Code)</option><option value=\'vtiger_leadscf:cf_705:cf_705:Leads_Product/Service_Sold:V\' >Product/Service Sold</option><option value=\'vtiger_leadscf:cf_643:cf_643:Leads_State:V\' >State</option><option value=\'vtiger_leadscf:cf_650:cf_650:Leads_State_of_Incorporation:V\' >State of Incorporation</option><option value=\'vtiger_leadscf:cf_648:cf_648:Leads_Telephone_Number:V\' >Telephone Number</option><option value=\'vtiger_leadscf:cf_655:cf_655:Leads_Type_of_Business:V\' >Type of Business</option><option value=\'vtiger_leadscf:cf_654:cf_654:Leads_Type_of_Entity:V\' >Type of Entity</option><option value=\'vtiger_leadsubdetails:website:website:Leads_Website:V\' >Website</option><option value=\'vtiger_leadscf:cf_644:cf_644:Leads_Zip_Code:V\' >Zip Code</option><optgroup label='Contract Out' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_715:cf_715:Leads_Advance_amount:V\' >Advance amount</option><option value=\'vtiger_leadscf:cf_719:cf_719:Leads_Closing_costs:V\' >Closing costs</option><option value=\'vtiger_leadscf:cf_718:cf_718:Leads_Daily_amount:V\' >Daily amount</option><option value=\'vtiger_leadscf:cf_720:cf_720:Leads_Date_contract_sent:D\' >Date contract sent</option><option value=\'vtiger_leadscf:cf_714:cf_714:Leads_Funder:V\' >Funder</option><option value=\'vtiger_leadscf:cf_717:cf_717:Leads_HP_%:V\' >HP %</option><option value=\'vtiger_leadscf:cf_716:cf_716:Leads_Payback_amount:V\' >Payback amount</option><optgroup label='Description Information' class='select' style='border:none'><option value=\'vtiger_crmentity:description:description:Leads_Description:V\' >Description</option><optgroup label='Funded' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_722:cf_722:Leads_.Advance_amount:V\' >.Advance amount</option><option value=\'vtiger_leadscf:cf_726:cf_726:Leads_.Closing_costs:V\' >.Closing costs</option><option value=\'vtiger_leadscf:cf_725:cf_725:Leads_.Daily_amount:V\' >.Daily amount</option><option value=\'vtiger_leadscf:cf_727:cf_727:Leads_.Date_funded:D\' >.Date funded</option><option value=\'vtiger_leadscf:cf_721:cf_721:Leads_.Funder:V\' >.Funder</option><option value=\'vtiger_leadscf:cf_724:cf_724:Leads_.HP_%:V\' >.HP %</option><option value=\'vtiger_leadscf:cf_723:cf_723:Leads_.Payback_amount:V\' >.Payback amount</option><option value=\'vtiger_leadscf:cf_733:cf_733:Leads_Categories:V\' >Categories</option><optgroup label='LEAD STATUS' class='select' style='border:none'><option value=\'vtiger_leaddetails:leadstatus:leadstatus:Leads_Lead_Status:V\' >Lead Status</option><optgroup label='Lead Information' class='select' style='border:none'><option value=\'vtiger_leaddetails:annualrevenue:annualrevenue:Leads_Annual_Revenue:I\' >Annual Revenue</option><option value=\'vtiger_crmentity:smownerid:assigned_user_id:Leads_Assigned_To:V\' >Assigned To</option><option value=\'vtiger_leadscf:cf_734:cf_734:Leads_Campaign_Source:V\' >Campaign Source</option><option value=\'vtiger_leaddetails:company:company:Leads_Company:V\' >Company</option><option value=\'vtiger_crmentity:createdtime:createdtime:Leads_Created_Time:DT\' >Created Time</option><option value=\'vtiger_leadscf:cf_641:cf_641:Leads_DBA:V\' >DBA</option><option value=\'vtiger_leaddetails:changeassigned:changeassigned:Leads_Date_Assigned:D\' >Date Assigned</option><option value=\'vtiger_leaddetails:email:email:Leads_Email:E\' >Email</option><option value=\'vtiger_leadaddress:fax:fax:Leads_Fax:V\' >Fax</option><option value=\'vtiger_leaddetails:firstname:firstname:Leads_First_Name:V\' >First Name</option><option value=\'vtiger_leaddetails:industry:industry:Leads_Industry:V\' >Industry</option><option value=\'vtiger_crmentity:modifiedby:modifiedby:Leads_Last_Modified_By:V\' >Last Modified By</option><option value=\'vtiger_leaddetails:lastname:lastname:Leads_Last_Name:V\' >Last Name</option><option value=\'vtiger_leaddetails:lead_no:lead_no:Leads_Lead_No:V\' >Lead No</option><option value=\'vtiger_leaddetails:leadsource:leadsource:Leads_Lead_Source:V\' >Lead Source</option><option value=\'vtiger_leadscf:cf_640:cf_640:Leads_Legal/Corporate_Name:V\' >Legal/Corporate Name</option><option value=\'vtiger_leadaddress:mobile:mobile:Leads_Mobile:V\' >Mobile</option><option value=\'vtiger_crmentity:modifiedtime:modifiedtime:Leads_Modified_Time:DT\' >Modified Time</option><option value=\'vtiger_leaddetails:noofemployees:noofemployees:Leads_No_Of_Employees:I\' >No Of Employees</option><option value=\'vtiger_leadaddress:phone:phone:Leads_Phone:V\' >Phone</option><option value=\'vtiger_leadscf:cf_735:cf_735:Leads_Priority:V\' >Priority</option><option value=\'vtiger_leaddetails:rating:rating:Leads_Rating:V\' >Rating</option><option value=\'vtiger_leaddetails:salutation:salutationtype:Leads_Salutation:V\' selected>Salutation</option><option value=\'vtiger_leaddetails:secondaryemail:secondaryemail:Leads_Secondary_Email:E\' >Secondary Email</option><option value=\'vtiger_leadscf:cf_713:cf_713:Leads_Send_application_automatically:C\' >Send application automatically</option><option value=\'vtiger_leadscf:cf_736:cf_736:Leads_Status_Date:D\' >Status Date</option><optgroup label='MERCHANT/OWNER INFORMATION' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_666:cf_666:Leads_Cell_Phone_Number:V\' >Cell Phone Number</option><option value=\'vtiger_leadscf:cf_656:cf_656:Leads_Corporate_Officer/Owner_Name:V\' >Corporate Officer/Owner Name</option><option value=\'vtiger_leadscf:cf_663:cf_663:Leads_Date_of_Birth:D\' >Date of Birth</option><option value=\'vtiger_leadscf:cf_660:cf_660:Leads_Home_Address:V\' >Home Address</option><option value=\'vtiger_leadscf:cf_707:cf_707:Leads_Home_Address_(City):V\' >Home Address (City)</option><option value=\'vtiger_leadscf:cf_708:cf_708:Leads_Home_Address_(State):V\' >Home Address (State)</option><option value=\'vtiger_leadscf:cf_665:cf_665:Leads_Home_Phone_Number:V\' >Home Phone Number</option><option value=\'vtiger_leadscf:cf_712:cf_712:Leads_Length_of_Ownership_(Months):NN\' >Length of Ownership (Months)</option><option value=\'vtiger_leadscf:cf_711:cf_711:Leads_Length_of_Ownership_(Years):NN\' >Length of Ownership (Years)</option><option value=\'vtiger_leadscf:cf_662:cf_662:Leads_Ownership_%:V\' >Ownership %</option><option value=\'vtiger_leadscf:cf_664:cf_664:Leads_Social_Security_Number:V\' >Social Security Number</option><option value=\'vtiger_leadscf:cf_657:cf_657:Leads_Title:V\' >Title</option><option value=\'vtiger_leadscf:cf_661:cf_661:Leads_Zip_Code:V\' >Zip Code</option><optgroup label='OTHER INFORMATION' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_704:cf_704:Leads_Any_open_State/Federal_Tax_Liens_Against_Business_:V\' >Any open State/Federal Tax Liens Against Business </option><option value=\'vtiger_leadscf:cf_695:cf_695:Leads_Average_Monthly_Credit_Card_($_Sales):V\' >Average Monthly Credit Card ($ Sales)</option><option value=\'vtiger_leadscf:cf_696:cf_696:Leads_Average_Monthly_Total_Sales_(Cash_Check_and_Credit:V\' >Average Monthly Total Sales (Cash Check and Credit</option><option value=\'vtiger_leadscf:cf_701:cf_701:Leads_Current_Balance:V\' >Current Balance</option><option value=\'vtiger_leadscf:cf_693:cf_693:Leads_Current_Processing_Company:V\' >Current Processing Company</option><option value=\'vtiger_leadscf:cf_702:cf_702:Leads_Do_you_usually_close_the_business_during_part_of_t:V\' >Do you usually close the business during part of t</option><option value=\'vtiger_leadscf:cf_699:cf_699:Leads_Highest_of_Volume_Months:V\' >Highest of Volume Months</option><option value=\'vtiger_leadscf:cf_694:cf_694:Leads_No._of_terminal:V\' >No. of terminal</option><option value=\'vtiger_leadscf:cf_700:cf_700:Leads_Prior/Current_Cash_Advance_Company:V\' >Prior/Current Cash Advance Company</option><option value=\'vtiger_leadscf:cf_697:cf_697:Leads_Requested_Advance_Amount:V\' >Requested Advance Amount</option><option value=\'vtiger_leadscf:cf_698:cf_698:Leads_Requested_Daily_Withholding:V\' >Requested Daily Withholding</option><optgroup label='PARTNER INFORMATION' class='select' style='border:none'><option value=\'vtiger_leadscf:cf_676:cf_676:Leads_-Cell_Phone_Number:V\' >-Cell Phone Number</option><option value=\'vtiger_leadscf:cf_667:cf_667:Leads_-Corporate_Officer/Owner_Name:V\' >-Corporate Officer/Owner Name</option><option value=\'vtiger_leadscf:cf_673:cf_673:Leads_-Date_of_Birth:D\' >-Date of Birth</option><option value=\'vtiger_leadscf:cf_670:cf_670:Leads_-Home_Address:V\' >-Home Address</option><option value=\'vtiger_leadscf:cf_709:cf_709:Leads_-Home_Address_(City):V\' >-Home Address (City)</option><option value=\'vtiger_leadscf:cf_710:cf_710:Leads_-Home_Address_(State):V\' >-Home Address (State)</option><option value=\'vtiger_leadscf:cf_675:cf_675:Leads_-Home_Phone_Number:V\' >-Home Phone Number</option><option value=\'vtiger_leadscf:cf_669:cf_669:Leads_-Length_of_Ownership_(Months):V\' >-Length of Ownership (Months)</option><option value=\'vtiger_leadscf:cf_668:cf_668:Leads_-Length_of_Ownership_(Years):V\' >-Length of Ownership (Years)</option><option value=\'vtiger_leadscf:cf_672:cf_672:Leads_-Ownership_%:V\' >-Ownership %</option><option value=\'vtiger_leadscf:cf_674:cf_674:Leads_-Social_Security_Number:V\' >-Social Security Number</option><option value=\'vtiger_leadscf:cf_706:cf_706:Leads_-Title:V\' >-Title</option><option value=\'vtiger_leadscf:cf_671:cf_671:Leads_-Zip_Code:V\' >-Zip Code</option>"+
+						"</select>";
+		node2 = document.createElement('td');
+	node2.setAttribute('class', 'dvtCellLabel');
+	node2.setAttribute('width', '25%');
+	newNode.appendChild(node2);
+	node2.innerHTML = '<select name="fop'+columnIndex+'" id="fop'+columnIndex+'" class="repBox" style="width:100px;" onchange="addRequiredElements('+columnIndex+');">'+
+							'<option value="">None</option>'+
+							''+
+						'</select>';
+
+	node3 = document.createElement('td');
+	node3.setAttribute('class', 'dvtCellLabel');
+	newNode.appendChild(node3);
+			node3.innerHTML = '<input name="fval'+columnIndex+'" id="fval'+columnIndex+'" class="repBox" type="text" value="">'+
+						'<input type="image" align="absmiddle" style="cursor: pointer;" onclick="document.getElementById(\'fval'+columnIndex+'\').value=\'\';return false;" language="javascript" title="Clear" alt="Clear" src="themes/images/clear_field.gif"/>';
+	
+	node4 = document.createElement('td');
+	node4.setAttribute('class', 'dvtCellLabel');
+	node4.setAttribute('id', 'columnconditionglue_'+columnIndex);
+	node4.setAttribute('width', '60px');
+	newNode.appendChild(node4);
+
+	node5 = document.createElement('td');
+	node5.setAttribute('class', 'dvtCellLabel');
+	node5.setAttribute('width', '30px');
+	newNode.appendChild(node5);
+	node5.innerHTML = '<a onclick="deleteColumnRow('+groupIndex+','+columnIndex+');" href="javascript:;">'+
+							'<img src="themes/images/delete.gif" align="absmiddle" title="..." border="0">'+
+						'</a>';
+
+	if(document.getElementById('fcol'+columnIndex)) updatefOptions(document.getElementById('fcol'+columnIndex), 'fop'+columnIndex);
+	if(typeof(column_index_array[groupIndex]) == 'undefined') column_index_array[groupIndex] = [];
+	column_index_array[groupIndex].push(columnIndex);
+	advft_column_index_count++;
+
+}
+
+function addGroupConditionGlue(groupIndex) {
+
+	var groupConditionGlueElement = document.getElementById('groupconditionglue_'+groupIndex);
+	if(groupConditionGlueElement) {
+		groupConditionGlueElement.innerHTML = "<select name='gpcon"+groupIndex+"' id='gpcon"+groupIndex+"' class='small'>"+
+												"<option value='and'>and</option>"+
+												"<option value='or'>or</option>"+
+											"</select>";
+	}
+}
+
+function addConditionGroup(parentNodeId) {
+
+	for(var i=group_index_array.length - 1; i>=0; --i) {
+		var prevGroupIndex = group_index_array[i];
+		if(document.getElementById('conditiongroup_'+prevGroupIndex)) {
+			addGroupConditionGlue(prevGroupIndex);
+			break;
+		}
+	}
+
+	var groupIndex = advft_group_index_count+1;
+	var parentNode = document.getElementById(parentNodeId);
+
+	var newNode = document.createElement('div');
+	newNodeId = 'conditiongroup_'+groupIndex;
+  	newNode.setAttribute('id',newNodeId);
+  	newNode.setAttribute('name','conditionGroup');
+
+  	newNode.innerHTML = "<table class='small crmTable' border='0' cellpadding='5' cellspacing='1' width='100%' valign='top' id='conditiongrouptable_"+groupIndex+"'>"+
+							"<tr id='groupheader_"+groupIndex+"'>"+
+								"<td colspan='5' align='right'>"+
+									"<a href='javascript:void(0);' onclick='deleteGroup(\""+groupIndex+"\");'><img border=0 src=themes/images/close.gif alt='Delete Group' title='Delete Group'/></a>"+
+								"</td>"+
+							"</tr>"+
+							"<tr id='groupfooter_"+groupIndex+"'>"+
+								"<td colspan='5' align='left'>"+
+									"<input type='button' class='crmbutton edit small' value='New Condition' onclick='addConditionRow(\""+groupIndex+"\")' />"+
+								"</td>"+
+							"</tr>"+
+						"</table>"+
+						"<table class='small' border='0' cellpadding='5' cellspacing='1' width='100%' valign='top'>"+
+							"<tr><td align='center' id='groupconditionglue_"+groupIndex+"'>"+
+							"</td></tr>"+
+						"</table>";
+
+	parentNode.appendChild(newNode);
+
+	group_index_array.push(groupIndex);
+	advft_group_index_count++;
+}
+</script>
+
+<div style="overflow:auto;" id='adv_filter_div' name='adv_filter_div'>
+	<table class="small" border="0" cellpadding="5" cellspacing="0" width="100%">
+		<tr>
+			<td class="detailedViewHeader" align="left"><b>Advanced Search</b></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="right">
+				<input type="button" class="crmbutton create small" value="New Group" onclick="addNewConditionGroup('adv_filter_div')" />
+			</td>
+		</tr>
+	</table>
+		<script type="text/javascript">
+		addNewConditionGroup('adv_filter_div');
+	</script>
+		</div>			</td>
+		</tr>
+	</table>
+		
+	<table border=0 cellspacing=0 cellpadding=5 width=100% class="searchUIAdv3 small" align="center">
+		<tr>
+			<td align="center" class="small"><input type="button" class="crmbutton small create" value=" Search Now " onClick="callSearch('Advanced');">
+			</td>
+		</tr>
+	</table>
+</form><br>
+</div>
+</div>		
+
+<div id="mergeDup" style="z-index:1;display:none;position:relative;">
+	<script language="JAVASCRIPT" type="text/javascript" src="include/js/smoothscroll.js"></script>
+<script language="JavaScript" type="text/JavaScript">    
+        var moveupLinkObj,moveupDisabledObj,movedownLinkObj,movedownDisabledObj;
+        function setObjects() 
+        {
+            availListObj=getObj("availList")
+            selectedColumnsObj=getObj("selectedColumns")
+
+        }
+
+        function addColumn() 
+        {
+        setObjects();
+            for (i=0;i<selectedColumnsObj.length;i++) 
+            {
+                selectedColumnsObj.options[i].selected=false
+            }
+
+            for (i=0;i<availListObj.length;i++) 
+            {
+                if (availListObj.options[i].selected==true) 
+                {            	
+                	var rowFound=false;
+                	var existingObj=null;
+                    for (j=0;j<selectedColumnsObj.length;j++) 
+                    {
+                        if (selectedColumnsObj.options[j].value==availListObj.options[i].value) 
+                        {
+                            rowFound=true
+                            existingObj=selectedColumnsObj.options[j]
+                            break
+                        }
+                    }
+
+                    if (rowFound!=true) 
+                    {
+                        var newColObj=document.createElement("OPTION")
+                        newColObj.value=availListObj.options[i].value
+                        if (browser_ie) newColObj.innerText=availListObj.options[i].innerText
+                        else if (browser_nn4 || browser_nn6) newColObj.text=availListObj.options[i].text
+                        selectedColumnsObj.appendChild(newColObj)
+                        availListObj.options[i].selected=false
+                        newColObj.selected=true
+                        rowFound=false
+                    } 
+                    else 
+                    {
+                        if(existingObj != null) existingObj.selected=true
+                    }
+                }
+            }
+        }
+
+        function delColumn() 
+        {
+        setObjects();
+            for (i=selectedColumnsObj.options.length;i>0;i--) 
+            {
+                if (selectedColumnsObj.options.selectedIndex>=0)
+                selectedColumnsObj.remove(selectedColumnsObj.options.selectedIndex)
+            }
+        }
+        
+        function formSelectColumnString()
+        {
+            var selectedColStr = "";
+            setObjects();
+            for (i=0;i<selectedColumnsObj.options.length;i++) 
+            {
+                selectedColStr += selectedColumnsObj.options[i].value + ",";
+            }
+            if (selectedColStr == "")
+            {
+            	alert('Select at least one field for merge criteria');
+            	return false;
+            }
+            document.mergeDuplicates.selectedColumnsString.value = selectedColStr;
+            return;
+        }
+	setObjects();		
+</script>	
+
+<form enctype="multipart/form-data" name="mergeDuplicates" method="post" action="index.php?module=Leads&action=FindDuplicateRecords" onsubmit="VtigerJS_DialogBox.block();">
+	<input type="hidden" name="module" value="Leads">
+	<input type="hidden" name="parenttab" value="Marketing">
+	<input type="hidden" name="action" value="FindDuplicateRecords">
+	<input type="hidden" name="selectedColumnsString"/>
+	<table class="searchUIBasic small" border="0" cellpadding="5" cellspacing="0" width="80%" height="10" align="center">
+		<tbody><tr class="lvtCol" style="Font-Weight: normal"><br>
+					<td colspan="2">
+						<span class="moduleName">Merging Criteria Selection</span><br>
+						<span font-weight:normal>Select the match fields to find duplicate records</span>
+					</td>
+					<td valign="top" align="right" class="small">
+						<span>&nbsp;</span>
+						<span align="right" onClick="mergeshowhide('mergeDup')" onmouseover="this.style.cursor='pointer';"><img src="themes/images/close.gif" border="0"></span><br>
+					</td>
+			   </tr>
+			   <tr><td colspan="3"></td></tr>
+				<tr>
+					<td><b>Available Fields</b></td>
+					<td></td>
+					<td><b> Fields to be matched on</b></td>
+				</tr>
+				<tr>
+					<td width=47%>
+						<select id="availList" multiple size="10" name="availList" class="txtBox" Style="width: 100%">
+						<option value="37">Salutation</option><option value="38">First Name</option><option value="41">Last Name</option><option value="45">Title</option><option value="46">Email</option><option value="48">Website</option><option value="50">Lead Status</option><option value="54">Assigned To</option><option value="58">Last Modified By</option><option value="65">Description</option><option value="640">Legal/Corporate Name</option><option value="641">DBA</option><option value="642">City</option><option value="643">State</option><option value="644">Zip Code</option><option value="648">Telephone Number</option><option value="649">Date Business Started</option><option value="650">State of Incorporation</option><option value="651">Federal Tax ID</option><option value="652">Fax Number</option><option value="653">Hours of Operation</option><option value="654">Type of Entity</option><option value="655">Type of Business</option><option value="656">Corporate Officer/Owner Name</option><option value="660">Home Address</option><option value="661">Zip Code</option><option value="662">Ownership %</option><option value="663">Date of Birth</option><option value="664">Social Security Number</option><option value="665">Home Phone Number</option><option value="666">Cell Phone Number</option><option value="667">-Corporate Officer/Owner Name</option><option value="668">-Length of Ownership (Years)</option><option value="669">-Length of Ownership (Months)</option><option value="670">-Home Address</option><option value="671">-Zip Code</option><option value="672">-Ownership %</option><option value="673">-Date of Birth</option><option value="674">-Social Security Number</option><option value="675">-Home Phone Number</option><option value="676">-Cell Phone Number</option><option value="677">Own/Lease</option><option value="678">Time at This Location (Year)</option><option value="679">Time at This Location (Months)</option><option value="680">Monthly Rent or Mortgage $</option><option value="681">Date Lease Ends</option><option value="682">Business Landlord or Mortgage Bank</option><option value="683">Contact Name and/or Account No.</option><option value="684">Office/Mobile Number</option><option value="685">Business Name</option><option value="686">Contact or Account Number</option><option value="687">Phone Number</option><option value="688">-Fax Number</option><option value="689">.Fax Number</option><option value="690">.Business Name</option><option value="691">.Contact or Account Number</option><option value="692">.Phone Number</option><option value="693">Current Processing Company</option><option value="694">No. of terminal</option><option value="695">Average Monthly Credit Card ($ Sales)</option><option value="696">Average Monthly Total Sales (Cash Check and Credit</option><option value="697">Requested Advance Amount</option><option value="698">Requested Daily Withholding</option><option value="699">Highest of Volume Months</option><option value="700">Prior/Current Cash Advance Company</option><option value="701">Current Balance</option><option value="702">Do you usually close the business during part of t</option><option value="703">Any open State/Federal Tax Liens Against Business </option><option value="704">Any open State/Federal Tax Liens Against Business </option><option value="705">Product/Service Sold</option><option value="706">-Title</option><option value="707">Home Address (City)</option><option value="708">Home Address (State)</option><option value="709">-Home Address (City)</option><option value="710">-Home Address (State)</option><option value="711">Length of Ownership (Years)</option><option value="712">Length of Ownership (Months)</option><option value="713">Send application automatically</option><option value="714">Funder</option><option value="715">Advance amount</option><option value="716">Payback amount</option><option value="717">HP %</option><option value="718">Daily amount</option><option value="719">Closing costs</option><option value="720">Date contract sent</option><option value="721">.Funder</option><option value="722">.Advance amount</option><option value="723">.Payback amount</option><option value="724">.HP %</option><option value="725">.Daily amount</option><option value="726">.Closing costs</option><option value="727">.Date funded</option><option value="729">Address</option><option value="730">Date Assigned</option><option value="733">Categories</option><option value="734">Campaign Source</option><option value="735">Priority</option><option value="736">Status Date</option>
+						</select>
+					</td>
+					<td width="6%">
+						<div align="center">
+							<input type="button" name="Button" value="&nbsp;&rsaquo;&rsaquo;&nbsp;" onClick="addColumn()" class="crmButton small" width="100%" /><br /><br />
+							<input type="button" name="Button1" value="&nbsp;&lsaquo;&lsaquo;&nbsp;" onClick="delColumn()" class="crmButton small" width="100%" /><br /><br />
+						</div>
+					</td>
+					<td width="47%">
+						<select id="selectedColumns" size="10" name="selectedColumns" multiple class="txtBox" Style="width: 100%">
+						
+						</select>
+					</td>
+				</tr> 
+				<tr>
+					<td colspan="3" align="center">
+					<input type="submit" name="save&merge" value="Find Duplicates" class="crmbutton small edit" onClick="return formSelectColumnString()"/>
+					<input type="button" name="cancel" value="Cancel" class="crmbutton small cancel" type="button" onClick="mergeshowhide('mergeDup');">
+					</td>
+				</tr>
+		</tbody>
+	</table>
+</form>
+</div>	 
+	   <!-- PUBLIC CONTENTS STARTS-->
+	  <div id="ListViewContents" class="small" style="width:100%;">
+	  			<script language="JavaScript" type="text/javascript" src="include/js/ListView.js"></script>
+<form name="massdelete" method="POST" id="massdelete" onsubmit="VtigerJS_DialogBox.block();">
+     <input name='search_url' id="search_url" type='hidden' value=''>
+     <input name="idlist" id="idlist" type="hidden">
+     <input name="change_owner" type="hidden">
+     <input name="change_status" type="hidden">
+     <input name="action" type="hidden">
+     <input name="where_export" type="hidden" value="">
+     <input name="step" type="hidden">
+	 <input name="excludedRecords" type="hidden" id="excludedRecords" value="">
+	 <input name="numOfRows" id="numOfRows" type="hidden" value="">
+     <input name="allids" type="hidden" id="allids" value="">
+     <input name="selectedboxes" id="selectedboxes" type="hidden" value="">
+     <input name="allselectedboxes" id="allselectedboxes" type="hidden" value="">
+     <input name="current_page_boxes" id="current_page_boxes" type="hidden" value="186148;186149;186150;186151;186156;186157;186158;186160;186162;186170;186186;186187;186189;186190;186199;186200;186201;186202;186203;186204">
+	 <table style='width:100%;'>
+<tr><td></td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=12.+New+Lead'>New Lead</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=Lead+Pending'>Lead Pending</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=1.+App+not+sent'>App not sent</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=2.+App+Out'>App Out</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=3.+App+In'>App In</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=4.+Approved'>Approved</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=5.+Contract+Out'>Contract Out</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=6.+Contract+In'>Contract In</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=7.+Funded'>Funded</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=8.+Merchant+Pass'>Merchant Pass</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=9.+Declined'>Declined</a></td><td rowspan='2' style='font-size:18px;text-align:center;width:20px;'>&#9658;</td><td style='width:120px;font-weight: bold;text-align:center;'><a href='index.php?module=Leads&action=ListView&status=10.+Follow+ups'>Follow ups</a></td><td></td>
+</tr>
+<tr>
+	<td></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=12.+New+Lead'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=Lead+Pending'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=1.+App+not+sent'>74</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=2.+App+Out'>5</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=3.+App+In'>1</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=4.+Approved'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=5.+Contract+Out'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=6.+Contract+In'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=7.+Funded'>1</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=8.+Merchant+Pass'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=9.+Declined'>0</a></td><td style='text-align:center;width: 100px;height: 100px;background: #0167F6;-moz-border-radius: 50px;-webkit-border-radius: 50px;border-radius: 50px;color: white ;font-size: 200%;'><a style='color:white !important;' href='index.php?module=Leads&action=ListView&status=10.+Follow+ups'>0</a></td><td></td>
+</tr>
+</table>
+				<!-- List View Master Holder starts -->
+				<table border=0 cellspacing=1 cellpadding=0 width=100% class="lvtBg">
+				<tr>
+				<td>
+					<!-- List View's Buttons and Filters starts -->
+					<table width="100%" class="layerPopupTransport">
+						<tr>
+							<td width="20%" class="small" nowrap align="left">
+										Showing Records 1 - 20 of 220
+							</td>
+							<td><table align="center">
+								<tr>
+									<td>
+									   <!-- Filters -->
+									   										<table cellpadding="5" cellspacing="0" class="small">
+											<tr>
+												<td style="padding-left:5px;padding-right:5px" align="center">
+                        										<b><font size=2>Filters :</font></b> <SELECT NAME="viewname" id="viewname" class="small" onchange="showDefaultCustomView(this,'Leads','Marketing')"><option disabled>--- Public ---</option><option selected value="50">All [Sam Brummel] </option><option value="56">Default View [Boaz Topol] </option><option value="59">Leads -- Cold [Boaz Topol] </option><option value="57">Leads -- Hot [Boaz Topol] </option><option value="58">Leads -- Warm [Boaz Topol] </option></SELECT>
+                   										</td>
+
+                            																					<td style="padding-left:5px;padding-right:5px" align="center"><a href="index.php?module=Leads&action=CustomView&parenttab=Marketing">Create Filter</a>
+													<span class="small">|</span>
+													<span class="small" disabled>Edit</span>
+													<span class="small">|</span>
+													<span class="small" disabled>Delete</span>
+												</td>
+						    																	</tr>
+											</table>
+				   						<!-- Filters  END-->
+				   																</td>
+									</td><td><b>State:</b><select name='viewuser' class='small' onchange='document.location.href="index.php?module=Leads&action=index&state=" + this.value'><option value='all' selected>All</option><option value='west'>West</option><option value='east'>East</option></select></td></tr></table>
+								</td>
+							<!-- Page Navigation -->
+							<td nowrap align="right" width="20%">
+								<table border=0 cellspacing=0 cellpadding=0 class="small">
+									<tr><td align="right" style="padding: 5px;"><img src="themes/images/start_disabled.gif" border="0" align="absmiddle">&nbsp;<img src="themes/images/previous_disabled.gif" border="0" align="absmiddle">&nbsp;<input class='small' name='pagenum' type='text' value='1'
+		style='width: 3em;margin-right: 0.7em;' onchange="getListViewEntries_js('Leads','parenttab=Marketing&start='+this.value+'');"
+		onkeypress="return VT_disableFormSubmit(event);"><span name='Leads_listViewCountContainerName' class='small' style='white-space: nowrap;'>of 11</span><a href="javascript:;" onClick="getListViewEntries_js('Leads','parenttab=Marketing&start=2');" alt="Next" title="Next"><img src="themes/images/next.gif" border="0" align="absmiddle"></a>&nbsp;<a href="javascript:;" onClick="getListViewEntries_js('Leads','parenttab=Marketing&start=11');" alt="Last" title="Last"><img src="themes/images/end.gif" border="0" align="absmiddle"></a>&nbsp;</td></tr>
+								</table>
+               				</td>
+						</tr>
+					</table>
+		        		<table border=0 cellspacing=0 cellpadding=2 width=100% class="small">
+			   		<tr>
+					<!-- Buttons -->
+					<td style="padding-right:20px" nowrap>
+
+					 					    						 <input class="crmbutton small edit" type="button" value="Mass Edit" onclick="return mass_edit(this, 'massedit', 'Leads', 'Marketing')"/>
+					    										    										    						 <input class="crmbutton small edit" type="button" value="Send Mail" onclick="return eMail('Leads',this);"/>
+													
+																																																																																															<input class="crmbutton small edit" type="button" value="Send SMS" onclick="SMSNotifierCommon.displaySelectWizard(this, 'Leads');" />
+													
+												
+                </td>
+       		  </tr>
+<!-- str = str.replace(/lynxPrime/g, "BUDDY");   -->
+			</table>
+			<!-- List View's Buttons and Filters ends -->
+<A href='javascript:var divToPrint=document.getElementById("monkey97");
+newWin= window.open("");
+var str = divToPrint.outerHTML;
+str = str.replace(/<td .*?><a href=.*?>(.+?)<\/a>\s+<span.*?cf_648.*?<\/span><\/td>/g, "<td><a href=\"tel:$1\">$1<\/a><\/td>");
+newWin.document.write(str);'>monkey</a>
+			<div id="monkey97" >
+			<table border=0 cellspacing=1 cellpadding=3 width=100% class="lvt small">
+			<!-- Table Headers -->
+			<tr>
+				<td class="lvtCol"><input type="checkbox"  name="selectall" id="selectCurrentPageRec" onClick=toggleSelect_ListView(this.checked,"selected_id")></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=cf_641&start=&sorder=ASC");' class='listFormHeaderLinks'>DBA</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=firstname&start=&sorder=ASC");' class='listFormHeaderLinks'>First Name</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=lastname&start=&sorder=ASC");' class='listFormHeaderLinks'>Last Name</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=email&start=&sorder=ASC");' class='listFormHeaderLinks'>Email</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=cf_648&start=&sorder=ASC");' class='listFormHeaderLinks'>Telephone Number</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=cf_643&start=&sorder=ASC");' class='listFormHeaderLinks'>State</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=changeassigned&start=&sorder=ASC");' class='listFormHeaderLinks'>Date</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=smownerid&start=&sorder=ASC");' class='listFormHeaderLinks'>Assigned To</a></td>
+				 				<td class="lvtCol"><a href='javascript:;' onClick='getListViewEntries_js("Leads","parenttab=Marketing&foldername=Default&order_by=leadstatus&start=&sorder=ASC");' class='listFormHeaderLinks'>Lead Status</a></td>
+				 				<td class="lvtCol">Action</td>
+							</tr>
+			<tr>
+				<td id="linkForSelectAll" class="linkForSelectAll" style="display:none;" colspan=15>
+					<span id="selectAllRec" class="selectall" style="display:inline;" onClick="toggleSelectAll_Records('Leads',true,'selected_id')">Select All <span id="count"> </span> records in Leads</span>
+					<span id="deSelectAllRec" class="selectall" style="display:none;" onClick="toggleSelectAll_Records('Leads',false,'selected_id')">Deselect all Leads</span>
+				</td>
+			</tr>
+			<!-- Table Contents -->
+																								<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186148">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186148" value= '186148' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>Midwest auto weekly - Not Yet Established</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>Kenneth</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>Davis</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186148,46,'email','Leads','record_id');">midwestautoweekly@yahoo.com</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>7084772394</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>IL</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186148' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186148' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186148&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																					<div id="viewnotes186148">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">S/W Kenneth Not Interested.</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 13:30:07 </font>
+									</div>
+								</div>
+								<div id="addnotes186148" style="display:none;">
+									<textarea id="newnote186148" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186148"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186148')" /></span>
+									<span id='spansave186148' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186148')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186148')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																																																																																																									</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186149">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186149" value= '186149' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>Drag-n-fly towing and transport - Not yet established</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>Gregory</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>Dalton</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186149,46,'email','Leads','record_id');"></a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>801-774-6190</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>UT</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186149' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186149' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186149&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																		<div id="viewnotes186149">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Looked up info contact # and state was input. Called no ans no opt for VM. CB . </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:05:13 </font>
+									</div>
+								</div>
+								<div id="addnotes186149" style="display:none;">
+									<textarea id="newnote186149" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186149"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186149')" /></span>
+									<span id='spansave186149' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186149')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186149')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																																																																																												</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186150">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186150" value= '186150' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>Ifinance - Not Yet Established</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>Davon</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>McIntosh</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186150,46,'email','Leads','record_id');">mcintoshdavon@yahoo.com</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>4046688568</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>GA</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186150' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186150' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186150&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																															<div id="viewnotes186150">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 .No ans no opt for VM2 </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 13:49:11 </font>
+									</div>
+								</div>
+								<div id="addnotes186150" style="display:none;">
+									<textarea id="newnote186150" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186150"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186150')" /></span>
+									<span id='spansave186150' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186150')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186150')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																																																																															</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186151">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186151" value= '186151' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>Joshua Scott lawn and landscaping - Not Yet Established</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>Joshua Lee</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>Scott</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186151,46,'email','Leads','record_id');">joshscott300.js@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>7729254093</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>FL</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186151' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186151' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186151&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																												<div id="viewnotes186151">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">VM left CB.<br />
+</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 13:55:46 </font>
+									</div>
+								</div>
+								<div id="addnotes186151" style="display:none;">
+									<textarea id="newnote186151" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186151"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186151')" /></span>
+									<span id='spansave186151' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186151')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186151')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																																																																		</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186156">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186156" value= '186156' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>Knight hauling - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>Audie</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>Butler</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186156,46,'email','Leads','record_id');">Audiel559@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>6015172108</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>MS</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186156' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186156' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186156&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																									<div id="viewnotes186156">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 No ans No opt for VM. CB. </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:10:01 </font>
+									</div>
+								</div>
+								<div id="addnotes186156" style="display:none;">
+									<textarea id="newnote186156" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186156"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186156')" /></span>
+									<span id='spansave186156' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186156')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186156')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																																																					</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186157">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186157" value= '186157' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>Weehawken glas</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>Luis</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>Rodrigues</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186157,46,'email','Leads','record_id');">rodolfo.trias@aol.com</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>2018382464</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>NJ</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186157' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186157' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186157&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																						<div id="viewnotes186157">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 No ans No Opt. for VM. CB. </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:11:29 </font>
+									</div>
+								</div>
+								<div id="addnotes186157" style="display:none;">
+									<textarea id="newnote186157" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186157"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186157')" /></span>
+									<span id='spansave186157' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186157')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186157')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																																								</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186158">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186158" value= '186158' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>Krambonz bbq</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>Rose</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>Brown</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186158,46,'email','Leads','record_id');">tellicostorm@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>423 5191705</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>TN, TX, GA</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186158' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186158' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186158&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																			<div id="viewnotes186158">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Left VM for Rose. CB . </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:14:10 </font>
+									</div>
+								</div>
+								<div id="addnotes186158" style="display:none;">
+									<textarea id="newnote186158" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186158"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186158')" /></span>
+									<span id='spansave186158' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186158')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186158')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																																											</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186160">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186160" value= '186160' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'>Elites - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'>OM</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'>OM</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186160,46,'email','Leads','record_id');">ompatel001@hotmail.com</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'>9009002479</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'></a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186160' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186160' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186160&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																<div id="viewnotes186160">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 No ans No opt for VM . CB .</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:20:01 </font>
+									</div>
+								</div>
+								<div id="addnotes186160" style="display:none;">
+									<textarea id="newnote186160" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186160"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186160')" /></span>
+									<span id='spansave186160' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186160')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186160')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																														</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186162">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186162" value= '186162' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'>PunchTrac - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'>Michael</a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'>Flowers</a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186162,46,'email','Leads','record_id');"></a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'></a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'></a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186162' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186162' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186162&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																													<div id="viewnotes186162">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Searched online for company unsuccessful. Not able to come up w/contact. </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:26:36 </font>
+									</div>
+								</div>
+								<div id="addnotes186162" style="display:none;">
+									<textarea id="newnote186162" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186162"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186162')" /></span>
+									<span id='spansave186162' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186162')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186162')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																																	</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186170">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186170" value= '186170' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>Jake's welding and repair - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>Jake</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>Lobacz</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186170,46,'email','Leads','record_id');">jklobacz3@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>7157732097</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>WI</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186170' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186170' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186170&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																										<div id="viewnotes186170">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 No ans No opt. for VM2. CB.</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:29:21 </font>
+									</div>
+								</div>
+								<div id="addnotes186170" style="display:none;">
+									<textarea id="newnote186170" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186170"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186170')" /></span>
+									<span id='spansave186170' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186170')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186170')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																																				</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186186">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186186" value= '186186' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>Mobe - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>Heather</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>Teeter</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186186,46,'email','Leads','record_id');">heathert2829@hotmail.com</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>6143547561</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>OH</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186186' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186186' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186186&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																							<div id="viewnotes186186">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Left  VM2. CB. </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:39:19 </font>
+									</div>
+								</div>
+								<div id="addnotes186186" style="display:none;">
+									<textarea id="newnote186186" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186186"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186186')" /></span>
+									<span id='spansave186186' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186186')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186186')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																																							</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186187">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186187" value= '186187' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>BS No Mas REI LLC - Not yet established</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>Brandi</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>McCarty</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186187,46,'email','Leads','record_id');">teammccartyenterprises@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>7028572430</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>NV</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186187' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186187' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186187&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																				<div id="viewnotes186187">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 No opt for VM2 VM Full. CB.  </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:41:48 </font>
+									</div>
+								</div>
+								<div id="addnotes186187" style="display:none;">
+									<textarea id="newnote186187" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186187"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186187')" /></span>
+									<span id='spansave186187' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186187')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186187')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																																										</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186189">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186189" value= '186189' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>Prestige home rehab and woodworks - not yet estalished</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>Joe</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>Lopez</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186189,46,'email','Leads','record_id');">joelopez748210@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>6239868599</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>AZ</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186189' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186189' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186189&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																	<div id="viewnotes186189">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt for VM2. VM-Box Full CB. </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:42:56 </font>
+									</div>
+								</div>
+								<div id="addnotes186189" style="display:none;">
+									<textarea id="newnote186189" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186189"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186189')" /></span>
+									<span id='spansave186189' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186189')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186189')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																													</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186190">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186190" value= '186190' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>Kilimanjaro young girls in need</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>Annamaria Evarist</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>Kanondo</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186190,46,'email','Leads','record_id');">annamariahkygn@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>762157545</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>GA</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186190' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186190' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186190&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																														<div id="viewnotes186190">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 .Calls goes to busy tone or dead tone. No opt for VM No Ans. CB <br />
+</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:46:45 </font>
+									</div>
+								</div>
+								<div id="addnotes186190" style="display:none;">
+									<textarea id="newnote186190" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186190"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186190')" /></span>
+									<span id='spansave186190' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186190')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186190')" value="Cancel" />
+									</span>
+								</div>
+																																																																																																</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186199">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186199" value= '186199' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>Get-N-spudzed - Not yet established</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>Joshua Wayne</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>Hertaus</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186199,46,'email','Leads','record_id');">joshhertaus86@yahoo.com</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>812 691 1547</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>IN</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186199' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186199' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186199&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																																											<div id="viewnotes186199">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Left VM2. CB. </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 11:48:13 </font>
+									</div>
+								</div>
+								<div id="addnotes186199" style="display:none;">
+									<textarea id="newnote186199" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186199"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186199')" /></span>
+									<span id='spansave186199' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186199')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186199')" value="Cancel" />
+									</span>
+								</div>
+																																																																																			</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186200">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186200" value= '186200' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>Stephen A Blain PA</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>Stephen</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>Blain</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186200,46,'email','Leads','record_id');">Steve@BizSalesFlorida.com</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>(407) 927-5319</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>FL</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">22-06-2017 <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186200' title='Leads'>2. App Out</a> <span type='vtlib_metainfo' vtrecordid='186200' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186200&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																																																								<div id="viewnotes186200">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Steve called back. Has Kabbage sent app. Will hold for F/ref. F/U Mon 6/26/17 @ 2 pm . See if he received email and if he may be interested </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 22-06-2017 17:31:00 </font>
+									</div>
+								</div>
+								<div id="addnotes186200" style="display:none;">
+									<textarea id="newnote186200" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186200"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186200')" /></span>
+									<span id='spansave186200' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186200')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186200')" value="Cancel" />
+									</span>
+								</div>
+																																																																						</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186201">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186201" value= '186201' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>Streets milling - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>Randell</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>Street</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186201,46,'email','Leads','record_id');">streetrandell@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>4027180424</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>NE</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">22-06-2017 <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186201' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186201' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186201&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																																																																					<div id="viewnotes186201">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">S/W Randell Briefly. Bad credit 500's but has bad collection in place and has been through the process and denied. Not Interested.  </div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 22-06-2017 16:48:30 </font>
+									</div>
+								</div>
+								<div id="addnotes186201" style="display:none;">
+									<textarea id="newnote186201" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186201"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186201')" /></span>
+									<span id='spansave186201' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186201')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186201')" value="Cancel" />
+									</span>
+								</div>
+																																																									</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186202">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186202" value= '186202' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>123 Build it for you - 1 - 6 months</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>Geoffrey</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>Austin</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186202,46,'email','Leads','record_id');">ageoff12@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>3367092660</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>NC</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186202' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186202' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186202&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																																																																																		<div id="viewnotes186202">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Left VM2. CB.</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 14:01:53 </font>
+									</div>
+								</div>
+								<div id="addnotes186202" style="display:none;">
+									<textarea id="newnote186202" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186202"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186202')" /></span>
+									<span id='spansave186202' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186202')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186202')" value="Cancel" />
+									</span>
+								</div>
+																																												</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186203">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186203" value= '186203' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>Lokito's Flavors - not yet established</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>Orlando</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>Feliciano</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186203,46,'email','Leads','record_id');">ofeliciano2k9@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>2035124467</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>CT</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186203' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186203' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186203&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																																																																																															<div id="viewnotes186203">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Attempt VM2 No ans No ot. for VM. CB .</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 12:03:21 </font>
+									</div>
+								</div>
+								<div id="addnotes186203" style="display:none;">
+									<textarea id="newnote186203" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186203"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186203')" /></span>
+									<span id='spansave186203' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186203')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186203')" value="Cancel" />
+									</span>
+								</div>
+																															</td>
+				</tr>
+																											<tr bgcolor=white onMouseOver="this.className='lvtColDataHover'" onMouseOut="this.className='lvtColData'" id="row_186204">
+			<td width="2%"><input type="checkbox" NAME="selected_id" id="186204" value= '186204' onClick="check_object(this)"></td>
+									<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>Self employed delivery</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='cf_641' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>Stephanie</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='firstname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>Wallace</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='lastname' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="javascript:InternalMailer(186204,46,'email','Leads','record_id');">stephanie.wallace888@gmail.com</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='email' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>(804) 678-8018</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='cf_648' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>VA</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='cf_643' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))">26-06-2017 <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='changeassigned' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>Crystal Vale</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='assigned_user_id' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href='index.php?module=Leads&parenttab=Marketing&action=DetailView&record=186204' title='Leads'>1. App not sent</a> <span type='vtlib_metainfo' vtrecordid='186204' vtfieldname='leadstatus' vtmodule='Leads' style='display:none;'></span></td>
+				        						<td onmouseover="vtlib_listview.trigger('cell.onmouseover', $(this))" onmouseout="vtlib_listview.trigger('cell.onmouseout', $(this))"><a href="index.php?module=Leads&action=EditView&record=186204&return_module=Leads&return_action=index&parenttab=Marketing&return_viewname=50">edit</a> </td>
+				        			</tr>
+							<tr bgcolor=LightGray onMouseOver="this.className='lvtColDataHover';this.style.backgroundColor='';" onMouseOut="this.className='lvtColData';this.style.backgroundColor='LightGray';">
+					<td colspan="11">
+																																																																																																																																																																																																																																																																												<div id="viewnotes186204">
+									<div class="dataField" valign="top" style="width: 99%; padding-top: 10px;">Left VM2 . CB .<br />
+</div>
+									<div class="dataLabel" valign="top" style="border-bottom: 1px dotted rgb(204, 204, 204); width: 99%; padding-bottom: 5px;">
+									<font color="darkred"> Author:  Vale on 26-06-2017 12:05:03 </font>
+									</div>
+								</div>
+								<div id="addnotes186204" style="display:none;">
+									<textarea id="newnote186204" class="detailedViewTextBox" onfocus="this.className='detailedViewTextBoxOn'" onblur="this.className='detailedViewTextBox'" rows="8" style="width:100%"></textarea>
+								</div>
+								<div id="panelnotes">
+									<span id="spanaddnote186204"><input type='button' value='Add note' class="crmbutton small edit" onclick="addnote('186204')" /></span>
+									<span id='spansave186204' style="display:none;">
+										<input type="button" class="crmbutton small edit" onclick="javascript:savenote('186204')" value="Save" />
+										or
+										<input type="button" class="crmbutton small delete" onclick="javascript:cancelsavenote('186204')" value="Cancel" />
+									</span>
+								</div>
+																		</td>
+				</tr>
+									 </table>
+			 </div>
+
+			 <table border=0 cellspacing=0 cellpadding=2 width=100%>
+			      <tr>
+				 <td style="padding-right:20px" nowrap>
+                                                                         					                         <input class="crmbutton small edit" type="button" value="Mass Edit" onclick="return mass_edit(this, 'massedit', 'Leads')"/>
+                                                                                                                                                                                                                                       <input class="crmbutton small edit" type="button" value="Send Mail" onclick="return eMail('Leads',this)"/>
+                                                                         
+		                																																																																							<input class="crmbutton small edit" type="button" value="Send SMS" onclick="SMSNotifierCommon.displaySelectWizard(this, 'Leads');" />
+													
+																		                    </td>
+
+				 <td align="right" width=40%>
+				   <table border=0 cellspacing=0 cellpadding=0 class="small">
+					<tr>
+																								</tr>
+				   </table>
+				 </td>
+			      </tr>
+       		    </table>
+		       </td>
+		   </tr>
+		   <tr>
+		   	<td>
+		   		<table width="100%">
+		   			<tr>
+		   				<td class="small" nowrap align="left">
+								Showing Records 1 - 20 of 220
+							</td>
+							<td nowrap width="50%" align="right">
+				    				<table border=0 cellspacing=0 cellpadding=0 class="small">
+				         			<tr><td align="right" style="padding: 5px;"><img src="themes/images/start_disabled.gif" border="0" align="absmiddle">&nbsp;<img src="themes/images/previous_disabled.gif" border="0" align="absmiddle">&nbsp;<input class='small' name='pagenum' type='text' value='1'
+		style='width: 3em;margin-right: 0.7em;' onchange="getListViewEntries_js('Leads','parenttab=Marketing&start='+this.value+'');"
+		onkeypress="return VT_disableFormSubmit(event);"><span name='Leads_listViewCountContainerName' class='small' style='white-space: nowrap;'>of 11</span><a href="javascript:;" onClick="getListViewEntries_js('Leads','parenttab=Marketing&start=2');" alt="Next" title="Next"><img src="themes/images/next.gif" border="0" align="absmiddle"></a>&nbsp;<a href="javascript:;" onClick="getListViewEntries_js('Leads','parenttab=Marketing&start=11');" alt="Last" title="Last"><img src="themes/images/end.gif" border="0" align="absmiddle"></a>&nbsp;</td></tr>
+				     				</table>
+				 			</td>
+				 		</tr>
+				 	</table>
+		   </tr>
+	    </table>
+
+   </form>
+
+<div id="basicsearchcolumns" style="display:none;"><select name="search_field" id="bas_searchfield" class="txtBox" style="width:150px"><option label="DBA" value="cf_641">DBA</option>
+<option label="First Name" value="firstname">First Name</option>
+<option label="Last Name" value="lastname">Last Name</option>
+<option label="Email" value="email">Email</option>
+<option label="Telephone Number" value="cf_648">Telephone Number</option>
+<option label="State" value="cf_643">State</option>
+<option label="Date Assigned" value="changeassigned">Date Assigned</option>
+<option label="Assigned To" value="assigned_user_id">Assigned To</option>
+<option label="Lead Status" value="leadstatus">Lead Status</option>
+</select></div>	  	</div>
+
+     </td>
+        <td valign=top><img src="themes/softed/images/showPanelTopRight.gif"></td>
+   </tr>
+</table>
+
+<!-- MassEdit Feature -->
+<div id="massedit" class="layerPopup" style="display:none;width:80%;">
+<table width="100%" border="0" cellpadding="3" cellspacing="0" class="layerHeadingULine">
+<tr>
+	<td class="layerPopupHeading" align="left" width="60%">Mass Edit - Records Fields</td>
+	<td>&nbsp;</td>
+	<td align="right" width="40%"><img onClick="fninvsh('massedit');" title="Close" alt="Close" style="cursor:pointer;" src="themes/images/close.gif" align="absmiddle" border="0"></td>
+</tr>
+</table>
+<div id="massedit_form_div"></div>
+
+</div>
+<!-- END -->
+<form name="SendMail"><div id="sendmail_cont" style="z-index:100001;position:absolute;"></div></form>
+
+<script>
+
+
+function ajaxChangeStatus(statusname)
+{
+	$("status").style.display="inline";
+	var viewid = document.getElementById('viewname').options[document.getElementById('viewname').options.selectedIndex].value;
+	var idstring = document.getElementById('idlist').value;
+	var searchurl= document.getElementById('search_url').value;
+	var tplstart='&';
+	if(gstart!='')
+	{
+		tplstart=tplstart+gstart;
+	}
+	if(statusname == 'status')
+	{
+		fninvsh('changestatus');
+		var url='&leadval='+document.getElementById('lead_status').options[document.getElementById('lead_status').options.selectedIndex].value;
+		var urlstring ="module=Users&action=updateLeadDBStatus&return_module=Leads"+tplstart+url+"&viewname="+viewid+"&idlist="+idstring+searchurl;
+	}
+	else if(statusname == 'owner')
+	{
+		if($("user_checkbox").checked)
+		{
+		    fninvsh('changeowner');
+		    var url='&owner_id='+document.getElementById('lead_owner').options[document.getElementById('lead_owner').options.selectedIndex].value;
+		    
+		        var urlstring ="module=Users&action=updateLeadDBStatus&return_module=Leads"+tplstart+url+"&viewname="+viewid+"&idlist="+idstring+searchurl;
+		    
+		} else {
+			fninvsh('changeowner');
+			var url='&owner_id='+document.getElementById('lead_group_owner').options[document.getElementById('lead_group_owner').options.selectedIndex].value;
+	      	
+		        var urlstring ="module=Users&action=updateLeadDBStatus&return_module=Leads"+tplstart+url+"&viewname="+viewid+"&idlist="+idstring+searchurl;
+        	
+    	}
+	}
+	new Ajax.Request(
+                'index.php',
+                {queue: {position: 'end', scope: 'command'},
+                        method: 'post',
+                        postBody: urlstring,
+                        onComplete: function(response) {
+                                $("status").style.display="none";
+                                result = response.responseText.split('&#&#&#');
+                                $("ListViewContents").innerHTML= result[2];
+                                if(result[1] != '')
+                                        alert(result[1]);
+				$('basicsearchcolumns').innerHTML = '';
+                        }
+                }
+        );
+	
+}
+</script>
+
+
+

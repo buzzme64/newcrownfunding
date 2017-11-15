@@ -1,0 +1,218 @@
+<?php
+/*+**********************************************************************************
+ * The contents of this file are subject to the vtiger CRM Public License Version 1.0
+ * ("License"); You may not use this file except in compliance with the License
+ * The Original Code is:  vtiger CRM Open Source
+ * The Initial Developer of the Original Code is vtiger.
+ * Portions created by vtiger are Copyright (C) vtiger.
+ * All Rights Reserved.
+ ************************************************************************************/
+
+require_once 'modules/Vtiger/EditView.php';
+
+if(isset($_REQUEST['campaignid'])) {
+	$smarty->assign("campaignid",vtlib_purify($_REQUEST['campaignid']));
+}
+if (isset($_REQUEST['record'])){
+	$viewblock=array(
+		'Lead Information'=>1,
+		'Business Information'=>1,
+		'MERCHANT/OWNER INFORMATION'=>1,
+		'Address Information'=>1
+	);
+	foreach ($smarty->_tpl_vars['BLOCKS'] as $key=>$blockfields){
+		if (isset($viewblock[$key])){
+			foreach($blockfields as $key2=>$blockrow){
+				$return=getfield($blockrow[0]);
+				if ($return!="") $smarty->_tpl_vars['BLOCKS'][$key][$key2][0][7]=$return;
+				$return=getfield($blockrow[1]);
+				if ($return!="") $smarty->_tpl_vars['BLOCKS'][$key][$key2][1][7]=$return;
+			}
+		}
+	}
+}//$p=print_r($smarty->_tpl_vars['BLOCKS'],true);echo "<pre>$p</pre>";
+foreach ($smarty->_tpl_vars['BLOCKS']['Contract Out'] as $key=>$value) {
+	$smarty->_tpl_vars['BLOCKS']['Funded'][$key][0][3][0]=$smarty->_tpl_vars['BLOCKS']['Contract Out'][$key][0][3][0];
+	$smarty->_tpl_vars['BLOCKS']['Funded'][$key][1][3][0]=$smarty->_tpl_vars['BLOCKS']['Contract Out'][$key][1][3][0];
+}
+$smarty->display("salesEditView.tpl");
+
+function getfield($field){
+	$return=array(
+		"novalue"=>" style='background:#ffff00;color:#000000;font-weight:bold;'",
+		"existvalue"=>""
+	);
+	switch($field[0][0]){
+		case 5:
+			$val=false;
+			foreach($field[3][0] as $key=>$value){
+				if (trim($key)!="") {
+					$val=true;
+				}
+			}
+			if (!$val)return $return["novalue"]; else return $return["existvalue"];
+			break;
+		case 1:
+		case 7:
+		case 11:
+		case 13:
+		case 17:
+		case 21:
+			if ($field[3][0]=="") return $return["novalue"]; else return $return["existvalue"];
+			break;
+		case 15:
+			$select=false;
+			foreach ($field[3][0] as $value){
+				if ($value[2]=="selected"){
+					$select=true;
+					//break;
+				}
+			}
+			if (!$select)return $return["novalue"]; else return $return["existvalue"];
+			break;
+		default: return $return["existvalue"]; break;
+	}
+}
+?>
+<script type="text/javascript">
+<?
+$res=  mysql_query("select leadstatus from vtiger_leaddetails where leadid='".$_REQUEST['record']."'");
+if (mysql_num_rows($res)>0){
+	$leadstatus='';
+	while ($row= mysql_fetch_array($res,MYSQL_ASSOC)) $leadstatus=$row['leadstatus'];
+	echo "hideviewdescription('".$leadstatus."');\n";
+}
+?>
+function validationform(){
+	var dba = document.getElementById('cf_641').value;
+	var legalname = document.getElementById('cf_640').value;
+	var phone = document.getElementById('cf_648').value;
+	var email = document.getElementById('email').value;
+	var record = document.getElementsByName('record')[0].value;
+	var status=jQuery("input[name=leadstatus]:checked").val();
+	var err='';
+	if (status=='6. Contract Out'){
+		if (jQuery("#cf_714").val()=='') err+='Funder must fill<br/>';
+		if (jQuery("#cf_715").val()=='') err+='Advance amount  must fill<br/>';
+		if (jQuery("#cf_716").val()=='') err+='Payback amount must fill<br/>';
+		if (jQuery("#cf_717").val()=='') err+='HP % musi fill<br/>';
+		if (jQuery("#cf_718").val()=='') err+='Daily amount must fill<br/>';
+		if (jQuery("#cf_719").val()=='') err+='Closing costs must fill<br/>';
+		if (jQuery("#jscal_field_cf_720").val()=='') err+='Date contract sent must fill<br/>';
+	}
+	if (status=='8. Funded'){
+		if (jQuery("#cf_721").val()=='') err+='Funder must fill<br/>';
+		if (jQuery("#cf_722").val()=='') err+='Advance amount  must fill<br/>';
+		if (jQuery("#cf_723").val()=='') err+='Payback amount must fill<br/>';
+		if (jQuery("#cf_724").val()=='') err+='HP % musi fill<br/>';
+		if (jQuery("#cf_725").val()=='') err+='Daily amount must fill<br/>';
+		if (jQuery("#cf_726").val()=='') err+='Closing costs must fill<br/>';
+		if (jQuery("#jscal_field_cf_727").val()=='') err+='Date funded sent must fill<br/>';
+	}
+	if (err==''){
+	new Ajax.Request(
+	'index.php',
+	{
+		queue:{
+			position: 'end',
+			scope: 'command'
+		},
+		method: 'post',
+		postBody:"module=Leads&action=LeadsAjax&file=ValidateForm&dba=" + dba + "&legalname=" + legalname + "&phone=" + phone + "&email=" + email + "&ownername=" + jQuery('#cf_656').val() + "&record=" + record,
+		onComplete: function(response) {
+			var str = response.responseText;
+			if(str.indexOf('SUCCESS') > -1)
+			{
+				q=formValidate();
+				if (q){
+					document.getElementsByName('EditView')[0].submit();
+					//oform.submit();
+					//return false;
+				}
+			}else
+			{
+				str=JSON.parse(str);
+				if (str.confirm){
+					if (confirm("The owner's information already exists. Is this a different business? \nClick yes to proceed or cancel.")) {
+						document.getElementsByName('EditView')[0].submit();
+					}else {
+						VtigerJS_DialogBox.unblock();
+					}
+				}else {
+					VtigerJS_DialogBox.unblock();
+					document.getElementById('errormessage').innerHTML=str.text;
+					document.getElementById('errorzone').style.display='table';
+				}
+				/*//alert(str);
+				if (!str.confirm){
+					document.getElementById('errormessage').innerHTML=str.text;
+					document.getElementById('errorzone').style.display='table';
+				}else{
+					if (confirm("The owner's information already exists. Is this a different business? \nClick yes to proceed or cancel.")) alert('OK');
+				}
+				//return false;*/
+			}
+		}
+	}
+	);
+	} else {
+		VtigerJS_DialogBox.unblock();
+		document.getElementById('errormessage').innerHTML=err;
+		document.getElementById('errorzone').style.display='';
+	}
+	/*new Ajax.Request(
+	'index.php',
+	{
+		queue: {
+			position: 'end',
+			scope: 'command'
+		},
+		method: 'post',
+		postBody:"module="+module+"&action=ExportAjax&export_record=true&search_type="+sel_type+"&export_data="+exp_type+"&idstring="+idstring,
+		onComplete: function(response) {
+			var str = response.responseText
+			if(str.indexOf('SUCCESS') > -1)
+			{
+				//oform.submit();
+				return false;
+			}else
+			{
+				VtigerJS_DialogBox.unblock();
+				alert(str);
+				return false;
+			}
+		}
+	}
+	);*/
+}
+function hideviewdescription(selvalue){
+	jQuery('#descriptionheader').hide();
+	jQuery('#rowdescription').hide();
+	jQuery('#contractoutheader').hide();
+	jQuery('#rowcontractout1').hide();
+	jQuery('#rowcontractout2').hide();
+	jQuery('#rowcontractout3').hide();
+	jQuery('#rowcontractout4').hide();
+	jQuery('#fundedheader').hide();
+	jQuery('#rowfunded1').hide();
+	jQuery('#rowfunded2').hide();
+	jQuery('#rowfunded3').hide();
+	jQuery('#rowfunded4').hide();
+	if (selvalue=='9. Declined' || selvalue=='4. Approved'){
+		jQuery('#descriptionheader').show();
+		jQuery('#rowdescription').show();
+	}else if(selvalue=='5. Contract Out'){
+		jQuery('#contractoutheader').show();
+		jQuery('#rowcontractout1').show();
+		jQuery('#rowcontractout2').show();
+		jQuery('#rowcontractout3').show();
+		jQuery('#rowcontractout4').show();
+	}else if(selvalue=='7. Funded'){
+		jQuery('#fundedheader').show();
+		jQuery('#rowfunded1').show();
+		jQuery('#rowfunded2').show();
+		jQuery('#rowfunded3').show();
+		jQuery('#rowfunded4').show();
+	}
+}
+</script>
